@@ -39,19 +39,19 @@ jobs:
 
     - name: Check formatting with black
       run: |
-        black --check --diff src/ tests/
+        uv run black --check --diff src/ tests/
 
     - name: Check imports with isort
       run: |
-        isort --check-only --diff src/ tests/
+        uv run isort --check-only --diff src/ tests/
 
     - name: Lint with ruff
       run: |
-        ruff check src/ tests/
+        uv run ruff check src/ tests/
 
     - name: Security check with bandit
       run: |
-        bandit -r src/
+        uv run bandit -r src/
 
   type-check:
     name: Type Checking
@@ -85,7 +85,7 @@ jobs:
 
     - name: Type check with mypy
       run: |
-        mypy src/ --show-error-codes --pretty
+        uv run mypy src/ --show-error-codes --pretty
 
   dependency-check:
     name: Dependency Security Check
