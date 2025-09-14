@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional, Union, Tuple
 from datetime import datetime
 import structlog
 
-from exceptions import ValidationError, create_error_from_exception
+from genome_mcp.exceptions import ValidationError, create_error_from_exception
 
 logger = structlog.get_logger(__name__)
 

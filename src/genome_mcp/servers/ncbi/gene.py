@@ -10,12 +10,12 @@ from typing import Dict, List, Optional, Any, AsyncGenerator
 from urllib.parse import urljoin, urlencode
 import structlog
 
-from servers.base import BaseMCPServer, ServerCapabilities
-from configuration import GenomeMCPConfig
-from http_utils import HTTPClient
-from data.parsers import GenomicDataParser, JSONDataParser
-from data.validators import GenomicValidator
-from exceptions import (
+from genome_mcp.servers.base import BaseMCPServer, ServerCapabilities
+from genome_mcp.configuration import GenomeMCPConfig
+from genome_mcp.http_utils import HTTPClient
+from genome_mcp.data.parsers import GenomicDataParser, JSONDataParser
+from genome_mcp.data.validators import GenomicValidator
+from genome_mcp.exceptions import (
     APIError,
     ValidationError,
     DataNotFoundError,

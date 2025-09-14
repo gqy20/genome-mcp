@@ -14,10 +14,10 @@ from pathlib import Path
 from dataclasses import dataclass, field
 import structlog
 
-from configuration import GenomeMCPConfig, get_config
-from http_utils import HTTPClient, RateLimiter
-from core import generate_cache_key, log_execution_time
-from exceptions import (
+from genome_mcp.configuration import GenomeMCPConfig, get_config
+from genome_mcp.http_utils import HTTPClient, RateLimiter
+from genome_mcp.core import generate_cache_key, log_execution_time
+from genome_mcp.exceptions import (
     GenomeMCPError,
     ConfigurationError,
     APIError,

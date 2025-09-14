@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional, Union
 from datetime import datetime, timezone
 from pathlib import Path
 
-from exceptions import ValidationError
+from genome_mcp.exceptions import ValidationError
 
 
 def generate_cache_key(prefix: str, *args, **kwargs) -> str:

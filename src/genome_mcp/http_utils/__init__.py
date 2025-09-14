@@ -12,7 +12,7 @@ from urllib.parse import urljoin, urlparse
 import aiohttp
 import structlog
 
-from exceptions import (
+from genome_mcp.exceptions import (
     APIError,
     NetworkError,
     TimeoutError,

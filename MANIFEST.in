@@ -1,11 +1,10 @@
 include README.md
 include LICENSE
-include pyproject.toml
-include project_config.json
-include uv.lock
+include mcp-config.json
+include usage_examples.py
+include test_mcp_local.py
 recursive-include src *.py
-recursive-include examples *.py
-recursive-include docs *.md
+recursive-include tests *.py
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
 recursive-exclude * .git*

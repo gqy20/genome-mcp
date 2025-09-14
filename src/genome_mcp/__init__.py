@@ -13,9 +13,9 @@ __version__ = "0.1.0"
 __author__ = "Genomics MCP Team"
 __email__ = "team@genomics-mcp.org"
 
-from .types.common import DataSource, ConfidenceLevel
-from .types.gene import GeneQuery, GeneResponse
-from .types.variant import VariantQuery, VariantResponse
+from .type_defs.common import DataSource, ConfidenceLevel
+from .type_defs.gene import GeneQuery, GeneResponse
+from .type_defs.variant import VariantQuery, VariantResponse
 from .exceptions import (
     GenomeMCPError,
     ConfigurationError,

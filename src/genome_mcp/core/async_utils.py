@@ -9,7 +9,7 @@ import time
 from typing import Any, Callable, Optional, Union
 from functools import wraps
 
-from exceptions import TimeoutError
+from genome_mcp.exceptions import TimeoutError
 
 
 def retry_async(
