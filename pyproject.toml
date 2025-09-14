@@ -52,7 +52,7 @@ dev = [
 ]
 
 [project.scripts]
-genome-mcp = "genome_mcp.cli:main"
+genome-mcp = "genome_mcp.cli:cli_entry_point"
 
 [project.urls]
 Homepage = "https://github.com/your-org/genome-mcp"

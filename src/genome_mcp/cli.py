@@ -218,5 +218,10 @@ async def main():
         sys.exit(1)
 
 
-if __name__ == "__main__":
+def cli_entry_point():
+    """Synchronous entry point for the CLI."""
     asyncio.run(main())
+
+
+if __name__ == "__main__":
+    cli_entry_point()
