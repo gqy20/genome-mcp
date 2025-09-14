@@ -21,7 +21,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 # 导入异常模块
-import exceptions
+from genome_mcp import exceptions
 
 
 def test_core_functionality():

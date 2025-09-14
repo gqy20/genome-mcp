@@ -11,8 +11,8 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from configuration import GenomeMCPConfig
-from servers.base import BaseMCPServer, ServerCapabilities, ServerStats
+from genome_mcp.configuration import GenomeMCPConfig
+from genome_mcp.servers.base import BaseMCPServer, ServerCapabilities, ServerStats
 
 
 class TestServer(BaseMCPServer):

@@ -11,14 +11,9 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from type_defs.common import DataSource, ConfidenceLevel, APIResponse, PaginationParams
-from type_defs.gene import GeneQuery, GeneInfo, GeneLocation, GeneResponse
-from type_defs.variant import (
-    VariantQuery,
-    VariantInfo,
-    GenomicPosition,
-    VariantResponse,
-)
+from genome_mcp.type_defs.common import DataSource, ConfidenceLevel, APIResponse, PaginationParams
+from genome_mcp.type_defs.gene import GeneInfo, GeneLocation, GeneQuery, GeneResponse
+from genome_mcp.type_defs.variant import VariantInfo, VariantConsequence, VariantFrequency
 
 
 class TestCommonTypes:

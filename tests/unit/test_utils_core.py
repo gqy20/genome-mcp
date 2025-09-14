@@ -17,7 +17,7 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from core import (
+from genome_mcp.core import (
     generate_cache_key,
     format_duration,
     format_file_size,
@@ -37,7 +37,7 @@ from core import (
     memory_usage,
     log_execution_time,
 )
-from exceptions import ValidationError
+from genome_mcp.exceptions import ValidationError
 
 
 class TestCacheKeyGeneration:

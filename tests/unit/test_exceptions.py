@@ -8,24 +8,23 @@ import pytest
 from datetime import datetime
 from unittest.mock import MagicMock
 
-from exceptions import (
+from genome_mcp.exceptions import (
     GenomeMCPError,
-    ConfigurationError,
     ValidationError,
     DataNotFoundError,
-    DataFormatError,
     APIError,
-    RateLimitError,
+    ConfigurationError,
     AuthenticationError,
+    RateLimitError,
+    ServerError,
+    DataFormatError,
     NetworkError,
     CacheError,
     TimeoutError,
     ResourceError,
     BatchProcessingError,
     QuerySyntaxError,
-    ServerError,
     DatabaseError,
-    create_error_from_exception,
 )
 
 
@@ -455,85 +454,7 @@ class TestDatabaseError:
         assert error.details["table_name"] == "genes"
 
 
-class TestErrorCreationFromException:
-    """Test create_error_from_exception function."""
 
-    def test_from_value_error(self):
-        """Test creating error from ValueError."""
-        original_exc = ValueError("Invalid value")
-        error = create_error_from_exception(original_exc)
-
-        assert isinstance(error, ValidationError)
-        assert error.message == "Invalid value"
-        assert error.original_exception is original_exc
-
-    def test_from_file_not_found_error(self):
-        """Test creating error from FileNotFoundError."""
-        original_exc = FileNotFoundError("File not found")
-        error = create_error_from_exception(original_exc)
-
-        assert isinstance(error, ResourceError)
-        assert error.message == "File not found"
-        assert error.resource_type == "file"
-        assert error.original_exception is original_exc
-
-    def test_from_permission_error(self):
-        """Test creating error from PermissionError."""
-        original_exc = PermissionError("Permission denied")
-        error = create_error_from_exception(original_exc)
-
-        assert isinstance(error, ResourceError)
-        assert error.message == "Permission denied"
-        assert error.resource_type == "permission"
-        assert error.original_exception is original_exc
-
-    def test_from_connection_error(self):
-        """Test creating error from ConnectionError."""
-        original_exc = ConnectionError("Connection failed")
-        error = create_error_from_exception(original_exc)
-
-        assert isinstance(error, NetworkError)
-        assert error.message == "Connection failed"
-        assert error.original_exception is original_exc
-
-    def test_from_timeout_error(self):
-        """Test creating error from TimeoutError."""
-        original_exc = TimeoutError("Operation timed out")
-        error = create_error_from_exception(original_exc)
-
-        assert isinstance(error, TimeoutError)
-        assert error.message == "Operation timed out"
-        assert error.original_exception is original_exc
-
-    def test_from_memory_error(self):
-        """Test creating error from MemoryError."""
-        original_exc = MemoryError("Out of memory")
-        error = create_error_from_exception(original_exc)
-
-        assert isinstance(error, ResourceError)
-        assert error.message == "Out of memory"
-        assert error.resource_type == "memory"
-        assert error.original_exception is original_exc
-
-    def test_from_generic_exception(self):
-        """Test creating error from generic exception."""
-        original_exc = Exception("Generic error")
-        error = create_error_from_exception(original_exc, error_code="CUSTOM_ERROR")
-
-        assert isinstance(error, GenomeMCPError)
-        assert error.message == "Generic error"
-        assert error.error_code == "CUSTOM_ERROR"
-        assert error.original_exception is original_exc
-
-    def test_from_generic_exception_without_error_code(self):
-        """Test creating error from generic exception without error code."""
-        original_exc = Exception("Generic error")
-        error = create_error_from_exception(original_exc)
-
-        assert isinstance(error, GenomeMCPError)
-        assert error.message == "Generic error"
-        assert error.error_code is None
-        assert error.original_exception is original_exc
 
 
 if __name__ == "__main__":

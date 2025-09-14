@@ -12,13 +12,13 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from data.parsers import (
+from genome_mcp.data.parsers import (
     GenomicDataParser,
     JSONDataParser,
     BatchProcessor,
     DataValidator,
 )
-from exceptions import ValidationError, DataFormatError
+from genome_mcp.exceptions import ValidationError, DataFormatError
 
 
 class TestGenomicDataParser:

@@ -12,12 +12,8 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from data.validators import (
-    GenomicValidator,
-    QueryValidator,
-    APIValidator,
-)
-from exceptions import ValidationError
+from genome_mcp.data.validators import GenomicValidator
+from genome_mcp.exceptions import ValidationError
 
 
 class TestGenomicValidator:

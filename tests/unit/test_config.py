@@ -12,7 +12,7 @@ import os
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from configuration import (
+from genome_mcp.configuration import (
     GenomeMCPConfig,
     ConfigManager,
     get_config,
@@ -46,7 +46,7 @@ class TestConfigModels:
 
         # Invalid TTL (too large)
         with pytest.raises(ValueError):
-            CacheConfig(ttl=100000)
+            CacheConfig(ttl=0.1.00)
 
         # Invalid max_size (too small)
         with pytest.raises(ValueError):
@@ -133,9 +133,9 @@ class TestConfigModels:
     def test_genome_mcp_config_validation(self):
         """Test GenomeMCPConfig validation."""
         # Valid config
-        config = GenomeMCPConfig(app_name="test-app", version="1.0.0", debug=False)
+        config = GenomeMCPConfig(app_name="test-app", version="0.1.0", debug=False)
         assert config.app_name == "test-app"
-        assert config.version == "1.0.0"
+        assert config.version == "0.1.0"
         assert config.debug is False
 
         # Invalid version format
@@ -193,14 +193,14 @@ class TestConfigManager:
 
         assert isinstance(config, GenomeMCPConfig)
         assert config.app_name == "genome-mcp"
-        assert config.version == "1.0.0"
+        assert config.version == "0.1.0"
         assert config.debug is False
 
     def test_load_config_from_json(self):
         """Test loading configuration from JSON file."""
         config_data = {
             "app_name": "test-app",
-            "version": "1.0.0",
+            "version": "0.1.0",
             "debug": True,
             "cache": {"enabled": True, "ttl": 7200},
         }
@@ -214,7 +214,7 @@ class TestConfigManager:
             config = manager.load_config()
 
             assert config.app_name == "test-app"
-            assert config.version == "1.0.0"
+            assert config.version == "0.1.0"
             assert config.debug is True
             assert config.cache.ttl == 7200
         finally:
@@ -224,7 +224,7 @@ class TestConfigManager:
         """Test loading configuration from YAML file."""
         config_data = """
         app_name: test-app
-        version: 1.0.0
+        version: 0.1.0
         debug: true
         cache:
             enabled: true
@@ -240,7 +240,7 @@ class TestConfigManager:
             config = manager.load_config()
 
             assert config.app_name == "test-app"
-            assert config.version == "1.0.0"
+            assert config.version == "0.1.0"
             assert config.debug is True
             assert config.cache.ttl == 7200
         finally:
@@ -293,7 +293,7 @@ class TestConfigManager:
     @patch.dict(os.environ, {"GENOME_MCP_VERSION": "2.1.0"})
     def test_env_override_file_config(self):
         """Test that environment variables override file configuration."""
-        config_data = {"app_name": "file-app", "version": "1.0.0", "debug": False}
+        config_data = {"app_name": "file-app", "version": "0.1.0", "debug": False}
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(config_data, f)
@@ -390,7 +390,7 @@ class TestConfigManager:
 
     def test_reload_config(self):
         """Test reloading configuration."""
-        config_data = {"app_name": "original-app", "version": "1.0.0"}
+        config_data = {"app_name": "original-app", "version": "0.1.0"}
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(config_data, f)
@@ -451,7 +451,7 @@ class TestConvenienceFunctions:
 
         assert isinstance(config, GenomeMCPConfig)
         assert config.app_name == "genome-mcp"
-        assert config.version == "1.0.0"
+        assert config.version == "0.1.0"
 
     def test_create_default_config_json(self):
         """Test creating default configuration file (JSON)."""
@@ -472,7 +472,7 @@ class TestConvenienceFunctions:
                 config_data = json.load(f)
 
             assert config_data["app_name"] == "genome-mcp"
-            assert config_data["version"] == "1.0.0"
+            assert config_data["version"] == "0.1.0"
         finally:
             if Path(temp_file).exists():
                 os.unlink(temp_file)
@@ -496,7 +496,7 @@ class TestConvenienceFunctions:
                 config_data = yaml.safe_load(f)
 
             assert config_data["app_name"] == "genome-mcp"
-            assert config_data["version"] == "1.0.0"
+            assert config_data["version"] == "0.1.0"
         finally:
             if Path(temp_file).exists():
                 os.unlink(temp_file)

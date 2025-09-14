@@ -15,7 +15,7 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from http_utils import (
+from genome_mcp.http_utils import (
     HTTPClient,
     RateLimiter,
     fetch_with_retry,
@@ -23,7 +23,7 @@ from http_utils import (
     sanitize_url,
     batch_requests,
 )
-from exceptions import (
+from genome_mcp.exceptions import (
     ValidationError,
     NetworkError,
     RateLimitError,

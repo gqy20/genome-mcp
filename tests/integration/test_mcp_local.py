@@ -11,7 +11,7 @@ from pathlib import Path
 # 添加src到路径
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from servers.ncbi.gene import NCBIGeneServer
+from genome_mcp.servers.ncbi.gene import NCBIGeneServer
 
 
 async def test_ncbi_gene_server():
