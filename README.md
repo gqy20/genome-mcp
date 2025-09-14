@@ -1,7 +1,7 @@
 # Genome MCP - Model Context Protocol Server for Genomic Data
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Publish](https://github.com/gqy20/genome-mcp/workflows/Publish/badge.svg)](https://github.com/gqy20/genome-mcp/actions/workflows/publish.yml)
 [![Code Quality](https://github.com/gqy20/genome-mcp/workflows/Quality/badge.svg)](https://github.com/gqy20/genome-mcp/actions/workflows/quality.yml)
 [![PyPI version](https://badge.fury.io/py/genome-mcp.svg)](https://badge.fury.io/py/genome-mcp)
@@ -161,6 +161,60 @@ uv run mypy src/
 
 # Linting
 uv run ruff check src/ tests/
+```
+
+## Configuring MCP Integration
+
+### For Claude Desktop
+
+Add the following configuration to your Claude Desktop settings:
+
+```json
+{
+  "mcpServers": {
+    "genome-mcp": {
+      "command": "uvx",
+      "args": [
+        "genome-mcp"
+      ],
+      "env": {}
+    }
+  }
+}
+```
+
+### For Cherry Studio
+
+Add the following configuration to your Cherry Studio settings:
+
+```json
+{
+  "mcpServers": {
+    "genome-mcp": {
+      "command": "uvx",
+      "args": [
+        "genome-mcp",
+        "stdio"
+      ],
+      "env": {}
+    }
+  }
+}
+```
+
+### Manual Configuration
+
+You can also run the MCP server manually:
+
+```bash
+# Run as stdio MCP server (for AI tools like Claude Desktop)
+genome-mcp --transport stdio
+
+# Run as SSE server (for web applications)
+genome-mcp --transport sse --host localhost --port 8080
+
+# Run as Streamable HTTP server (for API integration)
+genome-mcp --transport streamable-http --host localhost --port 8080
 ```
 
 ## Project Structure

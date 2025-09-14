@@ -9,7 +9,7 @@ Author: Genomics MCP Team
 Version: 0.1.0
 """
 
-__version__ = "0.1.1"
+__version__ = "0.1.3"
 __author__ = "Genomics MCP Team"
 __email__ = "team@genomics-mcp.org"
 
