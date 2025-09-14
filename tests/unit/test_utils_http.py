@@ -10,8 +10,11 @@ import aiohttp
 import time
 from unittest.mock import Mock, AsyncMock, patch
 from typing import Dict, Any, List
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
-from genome_mcp.utils.http import (
+from http_utils import (
     HTTPClient,
     RateLimiter,
     fetch_with_retry,
@@ -19,7 +22,7 @@ from genome_mcp.utils.http import (
     sanitize_url,
     batch_requests,
 )
-from genome_mcp.exceptions import (
+from exceptions import (
     ValidationError,
     NetworkError,
     RateLimitError,

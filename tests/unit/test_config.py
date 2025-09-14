@@ -12,7 +12,7 @@ import os
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from genome_mcp.configuration import (
+from configuration import (
     GenomeMCPConfig,
     ConfigManager,
     get_config,

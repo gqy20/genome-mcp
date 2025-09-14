@@ -7,13 +7,16 @@ This module contains tests for genomic, query, and API validators.
 import pytest
 from typing import Dict, Any, List, Optional
 from datetime import datetime
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
-from genome_mcp.utils.validators import (
+from data.validators import (
     GenomicValidator,
     QueryValidator,
     APIValidator,
 )
-from genome_mcp.exceptions import ValidationError
+from exceptions import ValidationError
 
 
 class TestGenomicValidator:

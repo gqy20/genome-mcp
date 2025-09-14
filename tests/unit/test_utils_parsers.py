@@ -7,14 +7,17 @@ This module contains tests for genomic data parsers, JSON parsers, and batch pro
 import pytest
 import json
 from typing import Dict, Any, List
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
-from genome_mcp.utils.parsers import (
+from data.parsers import (
     GenomicDataParser,
     JSONDataParser,
     BatchProcessor,
     DataValidator,
 )
-from genome_mcp.exceptions import ValidationError, DataFormatError
+from exceptions import ValidationError, DataFormatError
 
 
 class TestGenomicDataParser:

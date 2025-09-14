@@ -11,7 +11,7 @@ from typing import Dict, Any, List, Optional, Union, Tuple
 from datetime import datetime
 import structlog
 
-from ..exceptions import (
+from exceptions import (
     DataFormatError,
     ValidationError,
     create_error_from_exception

@@ -8,7 +8,7 @@ import pytest
 from datetime import datetime
 from unittest.mock import MagicMock
 
-from genome_mcp.exceptions import (
+from exceptions import (
     GenomeMCPError,
     ConfigurationError,
     ValidationError,

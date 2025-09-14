@@ -12,7 +12,11 @@ from pathlib import Path
 from unittest.mock import patch, MagicMock
 from datetime import datetime, timezone
 
-from genome_mcp.utils.core import (
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+
+from core import (
     generate_cache_key,
     format_duration,
     format_file_size,
@@ -32,7 +36,7 @@ from genome_mcp.utils.core import (
     memory_usage,
     log_execution_time,
 )
-from genome_mcp.exceptions import ValidationError
+from exceptions import ValidationError
 
 
 class TestCacheKeyGeneration:
