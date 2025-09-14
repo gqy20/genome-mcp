@@ -1,38 +1,41 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "genome-mcp"
-version = "0.1.0"
-description = "Intelligent genomics data analysis tool based on Model Context Protocol"
+version = "1.0.0"
+description = "Genome Model Context Protocol (MCP) server for genomic data access"
 authors = [
-    {name = "Genomics MCP Team", email = "team@genomics-mcp.org"},
+    {name = "Genome MCP Team", email = "contact@genomemcp.org"},
+]
+maintainers = [
+    {name = "Genome MCP Team", email = "contact@genomemcp.org"},
 ]
 license = {text = "MIT"}
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.9"
 classifiers = [
     "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
+keywords = ["genomics", "mcp", "bioinformatics", "api", "ncbi", "gene"]
 dependencies = [
-    "mcp>=1.0.0",
-    "biopython>=1.81",
-    "mygene>=3.2.0",
-    "myvariant>=1.0.0",
-    "pandas>=2.0.0",
-    "numpy>=1.24.0",
     "aiohttp>=3.8.0",
     "pydantic>=2.0.0",
-    "pyyaml>=6.0",
     "structlog>=23.0.0",
-    "click>=8.0.0",
+    "typing-extensions>=4.0.0",
 ]
 
 [project.optional-dependencies]
@@ -44,18 +47,16 @@ dev = [
     "isort>=5.12.0",
     "mypy>=1.0.0",
     "pre-commit>=3.0.0",
-    "ruff>=0.1.0",
-    "bandit>=1.7.0",
 ]
 
 [project.scripts]
-genome-mcp = "genome_mcp.cli:main"
+genome-mcp = "cli:main"
 
 [project.urls]
-Homepage = "https://github.com/genomics-mcp/genome-mcp"
-Documentation = "https://genome-mcp.readthedocs.io"
-Repository = "https://github.com/genomics-mcp/genome-mcp"
-"Bug Tracker" = "https://github.com/genomics-mcp/genome-mcp/issues"
+Homepage = "https://github.com/your-org/genome-mcp"
+Documentation = "https://github.com/your-org/genome-mcp#readme"
+Repository = "https://github.com/your-org/genome-mcp.git"
+"Bug Tracker" = "https://github.com/your-org/genome-mcp/issues"
 
 [tool.uv]
 dev-dependencies = [
@@ -70,9 +71,29 @@ dev-dependencies = [
     "bandit>=1.7.0",
 ]
 
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
 [tool.black]
 line-length = 88
-target-version = ['py311']
+target-version = ['py39']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
 
 [tool.isort]
 profile = "black"
@@ -89,5 +110,27 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "--cov=genome_mcp --cov-report=term-missing --cov-report=html"
+addopts = "-v --tb=short"
 asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/conftest.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]

@@ -1,0 +1,120 @@
+{
+  "project": {
+    "name": "genome-mcp",
+    "description": "Genome Model Context Protocol (MCP) server for genomic data access",
+    "version": "1.0.0",
+    "author": "Genome MCP Team",
+    "email": "contact@genomemcp.org",
+    "url": "https://github.com/your-org/genome-mcp",
+    "license": "MIT",
+    "classifiers": [
+      "Development Status :: 4 - Beta",
+      "Intended Audience :: Developers",
+      "Intended Audience :: Science/Research",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: OS Independent",
+      "Programming Language :: Python :: 3",
+      "Programming Language :: Python :: 3.9",
+      "Programming Language :: Python :: 3.10",
+      "Programming Language :: Python :: 3.11",
+      "Programming Language :: Python :: 3.12",
+      "Topic :: Scientific/Engineering :: Bio-Informatics",
+      "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+      "Topic :: Software Development :: Libraries :: Python Modules"
+    ],
+    "keywords": ["genomics", "mcp", "bioinformatics", "api", "ncbi", "gene"],
+    "entry_points": {
+      "console_scripts": [
+        "genome-mcp=cli:main"
+      ]
+    }
+  },
+  "dependencies": {
+    "required": [
+      "aiohttp>=3.8.0",
+      "pydantic>=2.0.0",
+      "structlog>=23.0.0",
+      "typing-extensions>=4.0.0"
+    ],
+    "optional": [
+      "pytest>=7.0.0",
+      "pytest-asyncio>=0.21.0",
+      "pytest-cov>=4.0.0",
+      "black>=23.0.0",
+      "isort>=5.12.0",
+      "mypy>=1.0.0",
+      "pre-commit>=3.0.0"
+    ]
+  },
+  "development": {
+    "python_version": ">=3.9",
+    "test_command": "python -m pytest tests/ -v",
+    "test_coverage": "python -m pytest tests/ --cov=src --cov-report=html",
+    "lint_command": "black src/ tests/ && isort src/ tests/",
+    "type_check": "mypy src/",
+    "build_command": "python -m build"
+  },
+  "servers": {
+    "ncbi-gene": {
+      "enabled": true,
+      "base_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
+      "timeout": 30.0,
+      "max_retries": 3,
+      "rate_limit": 10,
+      "rate_limit_window": 60,
+      "max_batch_size": 100
+    }
+  },
+  "cache": {
+    "enabled": true,
+    "ttl": 3600,
+    "max_size": 1000,
+    "cleanup_interval": 300
+  },
+  "logging": {
+    "level": "INFO",
+    "format": "json",
+    "handlers": ["console"],
+    "file": {
+      "enabled": false,
+      "path": "logs/genome-mcp.log",
+      "max_size": "10MB",
+      "backup_count": 5
+    }
+  },
+  "api": {
+    "timeout": 30.0,
+    "retry_attempts": 3,
+    "user_agent": "Genome-MCP/1.0.0",
+    "connection_pool_size": 10,
+    "connection_pool_maxsize": 100
+  },
+  "performance": {
+    "max_concurrent_requests": 50,
+    "request_timeout": 30.0,
+    "health_check_interval": 60,
+    "statistics_retention": 86400
+  },
+  "security": {
+    "enable_ssl_verification": true,
+    "allowed_hosts": [],
+    "rate_limiting": {
+      "enabled": true,
+      "requests_per_minute": 60,
+      "burst_limit": 10
+    }
+  },
+  "publishing": {
+    "pypi": {
+      "repository": "https://upload.pypi.org/legacy/",
+      "test_repository": "https://test.pypi.org/legacy/",
+      "username_env": "PYPI_USERNAME",
+      "password_env": "PYPI_PASSWORD"
+    },
+    "github": {
+      "release": true,
+      "create_tag": true,
+      "prerelease": false
+    }
+  }
+}
