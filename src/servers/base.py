@@ -178,7 +178,7 @@ class BaseMCPServer(ABC):
         
         # Close HTTP client
         if self._http_client:
-            await self._http_client.close()
+            await self._http_client.close_session()
             self._http_client = None
         
         self.logger.info("Server stopped")
