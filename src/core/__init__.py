@@ -43,14 +43,12 @@ __all__ = [
     "safe_get_nested",
     "calculate_similarity",
     "memory_usage",
-    
     # Formatting utilities
     "format_duration",
     "format_file_size",
     "get_timestamp",
     "sanitize_filename",
     "truncate_string",
-    
     # Async utilities
     "retry_async",
     "async_timeout",

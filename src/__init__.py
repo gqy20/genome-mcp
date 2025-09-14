@@ -38,7 +38,7 @@ from .exceptions import (
 
 __all__ = [
     "__version__",
-    "__author__", 
+    "__author__",
     "__email__",
     "DataSource",
     "ConfidenceLevel",

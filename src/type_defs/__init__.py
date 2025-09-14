@@ -5,39 +5,39 @@ This module contains type definitions for various genomic data structures.
 """
 
 from .gene import (
-    GeneQuery, 
-    GeneResponse, 
-    GeneInfo, 
+    GeneQuery,
+    GeneResponse,
+    GeneInfo,
     GeneLocation,
     BatchGeneQuery,
-    BatchGeneResponse
+    BatchGeneResponse,
 )
 from .variant import (
-    VariantQuery, 
-    VariantResponse, 
+    VariantQuery,
+    VariantResponse,
     VariantInfo,
     GenomicPosition,
     ClinicalSignificance,
     PopulationFrequency,
     FunctionalPrediction,
     RegionVariantQuery,
-    RegionVariantResponse
+    RegionVariantResponse,
 )
 from .common import (
-    DataSource, 
-    ConfidenceLevel, 
+    DataSource,
+    ConfidenceLevel,
     APIResponse,
     PaginationParams,
     PaginationResponse,
     QueryResult,
     CacheEntry,
-    ErrorInfo
+    ErrorInfo,
 )
 
 __all__ = [
     # Gene types
     "GeneQuery",
-    "GeneResponse", 
+    "GeneResponse",
     "GeneInfo",
     "GeneLocation",
     "BatchGeneQuery",

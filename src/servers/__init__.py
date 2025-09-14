@@ -15,7 +15,7 @@ from .base import BaseMCPServer
 
 __all__ = [
     "BaseMCPServer",
-    # "NCBIGeneServer", 
+    # "NCBIGeneServer",
     # "NCBIPublicationServer",
     # "EnsemblGeneServer",
     # "dbsnpServer",

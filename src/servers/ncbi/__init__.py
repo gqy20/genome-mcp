@@ -9,6 +9,6 @@ This module contains MCP server implementations for NCBI databases.
 # from .publication import NCBIPublicationServer
 
 __all__ = [
-    # "NCBIGeneServer", 
+    # "NCBIGeneServer",
     # "NCBIPublicationServer"
 ]
