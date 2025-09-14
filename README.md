@@ -1,121 +1,133 @@
-# Genome MCP - Model Context Protocol Server for Genomic Data
+# Genome MCP 🧬
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![Publish](https://github.com/your-org/genome-mcp/workflows/Publish/badge.svg)](https://github.com/your-org/genome-mcp/actions/workflows/publish.yml)
-[![Code Quality](https://github.com/your-org/genome-mcp/workflows/Quality/badge.svg)](https://github.com/your-org/genome-mcp/actions/workflows/quality.yml)
 [![PyPI version](https://badge.fury.io/py/genome-mcp.svg)](https://badge.fury.io/py/genome-mcp)
 
-A Model Context Protocol (MCP) server that provides unified access to genomic databases through a standardized API interface. Built with async architecture and designed for AI-tool integration.
+高性能的模型上下文协议（MCP）服务器，用于基因组数据访问，使AI工具能够通过自然语言查询NCBI基因数据库。
 
-## Features
+## 功能特性
 
-- **MCP Server Architecture**: Built on Model Context Protocol for seamless AI-tool integration
-- **NCBI Database Integration**: Full access to NCBI Gene database via EUtils API
-- **Async Performance**: High-performance async/await architecture
-- **Rate Limiting & Caching**: Built-in request optimization and response caching
-- **Type Safety**: Full type hints with Pydantic models
-- **CLI Interface**: Command-line interface for direct database queries
-- **Modern Python**: Uses uv for dependency management and modern packaging
+- **🤖 MCP集成**：通过模型上下文协议实现无缝AI工具集成
+- **🧬 NCBI基因访问**：查询基因信息、搜索基因、批量操作
+- **⚡ 异步架构**：使用aiohttp的高性能异步/等待架构
+- **🛡️ 速率限制**：内置请求优化和缓存机制
+- **🔒 类型安全**：完整的Pydantic模型和类型提示
+- **🖥️ 命令行界面**：直接的数据库查询命令行工具
+- **📦 现代Python**：使用uv进行快速的依赖管理
 
-## Installation
+## 快速开始
 
-### Using uv (Recommended)
+### 安装
 
 ```bash
-# Install with uv
+# 使用uv（推荐）
 uv add genome-mcp
 
-# Or run directly without installation
-uv run genome-mcp --help
-```
-
-### Using pip
-
-```bash
+# 使用pip
 pip install genome-mcp
 ```
 
-## Quick Start
-
-### Command Line Interface
+### 命令行使用
 
 ```bash
-# Show help and available commands
-genome-mcp --help
+# 查询基因信息
+genome-mcp query 7157 --species human  # TP53基因
 
-# NCBI Gene Server
-genome-mcp ncbi-gene info --gene-id 7157  # TP53
-genome-mcp ncbi-gene search --term "cancer" --species human
-genome-mcp ncbi-gene homologs --gene-id 7157 --species mouse
+# 搜索基因
+genome-mcp search "癌症" --species human
 
-# Server info and health
-genome-mcp server info
-genome-mcp server health
+# 批量查询多个基因
+genome-mcp batch 7157,7158,7159 --species human
 
-# Pretty output (default)
-genome-mcp ncbi-gene info --gene-id 7157 --output pretty
-
-# JSON output for programmatic use
-genome-mcp ncbi-gene info --gene-id 7157 --output json
+# 启动MCP服务器
+genome-mcp server
 ```
 
 ### Python API
 
 ```python
 import asyncio
-from src.servers.ncbi.gene import NCBIGeneServer
+from genome_mcp.servers.ncbi.gene import NCBIGeneServer
 
 async def main():
-    # Create NCBI Gene server instance
     server = NCBIGeneServer()
-    
-    # Get gene information
-    gene_info = await server.execute_request("get_gene_info", {"gene_id": "7157"})
-    print(f"Gene: {gene_info['data']['name']}")
-    print(f"Description: {gene_info['data']['description']}")
-    
-    # Search for genes
-    search_results = await server.execute_request("search_genes", {
-        "term": "cancer",
-        "species": "human"
-    })
-    print(f"Found {len(search_results['data'])} genes")
+    result = await server.execute_request("get_gene_info", {"gene_id": "7157"})
+    print(f"基因: {result['data']['name']}")
 
-if __name__ == "__main__":
-    asyncio.run(main())
+asyncio.run(main())
 ```
 
-## Configuration
+## AI工具集成
 
-### Environment Variables
+### Cherry Studio / Cursor 部署
+
+1. **使用uvx安装Genome MCP**（推荐）：
+   ```bash
+   # 如果还未安装uv
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   
+   # 测试安装
+   uvx genome-mcp --help
+   ```
+
+2. **在AI工具中配置MCP服务器**：
+
+   **Cherry Studio：**
+   - 打开设置 → MCP服务器
+   - 添加新服务器，命令为：`uvx genome-mcp server`
+   - 或使用下面的配置文件
+
+   **Cursor：**
+   - 在项目根目录创建 `.cursor/mcp.json`：
+   ```json
+   {
+     "mcpServers": {
+       "genome-mcp": {
+         "command": "uvx",
+         "args": ["genome-mcp", "server"],
+         "env": {}
+       }
+     }
+   }
+   ```
+
+### MCP配置
+
+在项目根目录创建 `mcp.json`：
+
+```json
+{
+  "mcpServers": {
+    "genome-mcp": {
+      "command": "uvx",
+      "args": ["genome-mcp", "server", "--server-name", "ncbi-gene"],
+      "env": {
+        "NCBI_API_KEY": "${NCBI_API_KEY}",
+        "NCBI_EMAIL": "${NCBI_EMAIL}"
+      }
+    }
+  }
+}
+```
+
+## 配置
+
+### 环境变量
 
 ```bash
-# NCBI API key (optional but recommended for higher rate limits)
-export NCBI_API_KEY="your_ncbi_api_key"
-
-# Email for NCBI API (required for some operations)
-export NCBI_EMAIL="your_email@example.com"
+export NCBI_API_KEY="你的_ncbi_api密钥"    # 可选：提高速率限制
+export NCBI_EMAIL="你的邮箱@example.com"  # 某些操作需要
 ```
 
-### Project Configuration
+### 高级配置
 
-The project includes a comprehensive configuration file (`project_config.json`) that defines:
-
-- Server settings and capabilities
-- Rate limiting and caching configuration
-- Logging and monitoring settings
-- Development and deployment options
-
-### Configuration File
-
-Create a configuration file at `~/.genome_mcp/config.json`:
+创建 `~/.genome_mcp/config.json`：
 
 ```json
 {
   "servers": {
     "ncbi_gene": {
-      "base_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils",
       "rate_limit": {
         "requests_per_second": 3,
         "burst_limit": 10
@@ -125,125 +137,44 @@ Create a configuration file at `~/.genome_mcp/config.json`:
         "ttl": 3600
       }
     }
-  },
-  "logging": {
-    "level": "INFO",
-    "format": "json"
   }
 }
 ```
 
-## Development
-
-### Setup Development Environment
+## 开发
 
 ```bash
-# Clone the repository
+# 克隆仓库
 git clone https://github.com/your-org/genome-mcp.git
 cd genome-mcp
 
-# Install with uv
+# 设置开发环境
 uv sync --dev
 
-# Install pre-commit hooks
-uv run pre-commit install
-```
-
-### Running Tests
-
-```bash
-# Run all tests
+# 运行测试
 uv run pytest
 
-# Run with coverage
-uv run pytest --cov=src --cov-report=html
-
-# Run specific test file
-uv run pytest tests/test_ncbi_gene_server.py
-```
-
-### Code Quality
-
-```bash
-# Format code
+# 代码质量检查
 uv run black src/ tests/
-
-# Sort imports
 uv run isort src/ tests/
-
-# Type checking
 uv run mypy src/
-
-# Linting
-uv run ruff check src/ tests/
 ```
 
-## Project Structure
+## API参考
 
-```
-genome-mcp/
-  src/                     # Source code (flat structure)
-    cli.py                 # Command line interface
-    servers/               # MCP server implementations
-      base.py            # Base MCP server class
-      ncbi/              # NCBI server implementations
-        gene.py         # NCBI Gene server
-    utils/                 # Utility functions
-    models/                # Pydantic models and types
-  tests/                   # Test code
-  docs/                    # Documentation
-  examples/               # Example code
-  .github/                # GitHub Actions workflows
-  project_config.json      # Project configuration
-```
+| 命令 | 描述 | 示例 |
+|---------|-------------|---------|
+| `query <id>` | 根据ID获取基因 | `genome-mcp query 7157` |
+| `search <term>` | 搜索基因 | `genome-mcp search 癌症` |
+| `batch <ids>` | 批量查询 | `genome-mcp batch 7157,7158` |
+| `server` | 启动MCP服务器 | `genome-mcp server` |
 
-## Architecture
+## 支持
 
-### MCP Server Architecture
+- **问题反馈**：[GitHub Issues](https://github.com/your-org/genome-mcp/issues)
+- **文档**： [API参考](docs/API_REFERENCE.md)
+- **PyPI**： [genome-mcp](https://pypi.org/project/genome-mcp/)
 
-- **BaseMCPServer**: Abstract base class providing common MCP functionality
-- **NCBIGeneServer**: Implementation for NCBI Gene database access
-- **Async Design**: Full async/await support for high performance
-- **Rate Limiting**: Built-in request rate limiting with Token Bucket algorithm
-- **Caching**: Optional response caching to improve performance
-- **Error Handling**: Comprehensive error handling and logging
+## 许可证
 
-### Key Components
-
-- **Server Capabilities**: Define available operations and features
-- **Request Execution**: Support for single, batch, and streaming requests
-- **Health Monitoring**: Built-in health checks and statistics tracking
-- **Configuration Management**: JSON-based configuration system
-
-## Contributing
-
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Citation
-
-If you use Genome MCP in your research, please cite:
-
-```bibtex
-@software{genome_mcp,
-  title={Genome MCP: Model Context Protocol Server for Genomic Data},
-  author={Genome MCP Team},
-  year={2025},
-  url={https://github.com/your-org/genome-mcp}
-}
-```
-
-## Support
-
-- **Documentation**: [https://github.com/your-org/genome-mcp#readme](https://github.com/your-org/genome-mcp#readme)
-- **Issues**: [https://github.com/your-org/genome-mcp/issues](https://github.com/your-org/genome-mcp/issues)
-- **Discussions**: [https://github.com/your-org/genome-mcp/discussions](https://github.com/your-org/genome-mcp/discussions)
-
-## Acknowledgments
-
-- [NCBI](https://www.ncbi.nlm.nih.gov/) for providing comprehensive genomic databases
-- [Model Context Protocol](https://modelcontextprotocol.io/) for enabling AI-tool integration
-- [uv](https://github.com/astral-sh/uv) for modern Python package management
+MIT许可证 - 详见 [LICENSE](LICENSE) 文件
