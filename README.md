@@ -6,7 +6,7 @@
 [![Code Quality](https://github.com/your-org/genome-mcp/workflows/Quality/badge.svg)](https://github.com/your-org/genome-mcp/actions/workflows/quality.yml)
 [![PyPI version](https://badge.fury.io/py/genome-mcp.svg)](https://badge.fury.io/py/genome-mcp)
 
-A Model Context Protocol (MCP) server that provides unified access to genomic databases through a standardized API interface. Built with async architecture and designed for AI-tool integration.
+A Model Context Protocol (MCP) server that provides unified access to genomic databases through a standardized API interface. Built with async architecture and designed for AI-tool integration using the FastMCP framework.
 
 ## Features
 
@@ -38,49 +38,34 @@ pip install genome-mcp
 
 ## Quick Start
 
-### Command Line Interface
+### Running as MCP Server
 
 ```bash
-# Show help and available commands
-genome-mcp --help
+# Run as stdio MCP server (for AI tools like Claude Desktop)
+genome-mcp --transport stdio
 
-# NCBI Gene Server
-genome-mcp ncbi-gene info --gene-id 7157  # TP53
-genome-mcp ncbi-gene search --term "cancer" --species human
-genome-mcp ncbi-gene homologs --gene-id 7157 --species mouse
+# Run as SSE server (for web applications)
+genome-mcp --transport sse --host localhost --port 8080
 
-# Server info and health
-genome-mcp server info
-genome-mcp server health
-
-# Pretty output (default)
-genome-mcp ncbi-gene info --gene-id 7157 --output pretty
-
-# JSON output for programmatic use
-genome-mcp ncbi-gene info --gene-id 7157 --output json
+# Run as Streamable HTTP server (for API integration)
+genome-mcp --transport streamable-http --host localhost --port 8080
 ```
 
 ### Python API
 
 ```python
 import asyncio
-from src.servers.ncbi.gene import NCBIGeneServer
+from main import get_gene_info, search_genes
 
 async def main():
-    # Create NCBI Gene server instance
-    server = NCBIGeneServer()
-    
     # Get gene information
-    gene_info = await server.execute_request("get_gene_info", {"gene_id": "7157"})
-    print(f"Gene: {gene_info['data']['name']}")
-    print(f"Description: {gene_info['data']['description']}")
+    gene_info = await get_gene_info("7157")  # TP53
+    print(f"Gene: {gene_info['info']['name']}")
+    print(f"Description: {gene_info['info']['description']}")
     
     # Search for genes
-    search_results = await server.execute_request("search_genes", {
-        "term": "cancer",
-        "species": "human"
-    })
-    print(f"Found {len(search_results['data'])} genes")
+    search_results = await search_genes("cancer", species="human")
+    print(f"Found {len(search_results['results'])} genes")
 
 if __name__ == "__main__":
     asyncio.run(main())
@@ -182,14 +167,17 @@ uv run ruff check src/ tests/
 
 ```
 genome-mcp/
-  src/                     # Source code (flat structure)
-    cli.py                 # Command line interface
+  main.py                  # FastMCP server entry point
+  src/                     # Source code
     servers/               # MCP server implementations
       base.py            # Base MCP server class
       ncbi/              # NCBI server implementations
         gene.py         # NCBI Gene server
-    utils/                 # Utility functions
-    models/                # Pydantic models and types
+    configuration.py       # Configuration management
+    http_utils/            # HTTP utilities
+    data/                  # Data processing
+    core/                  # Core utilities
+    exceptions.py          # Exception definitions
   tests/                   # Test code
   docs/                    # Documentation
   examples/               # Example code
@@ -199,10 +187,11 @@ genome-mcp/
 
 ## Architecture
 
-### MCP Server Architecture
+### FastMCP Server Architecture
 
-- **BaseMCPServer**: Abstract base class providing common MCP functionality
+- **FastMCP Framework**: Built on the FastMCP framework for MCP protocol implementation
 - **NCBIGeneServer**: Implementation for NCBI Gene database access
+- **MCP Tools**: Expose genomic data functions as MCP tools
 - **Async Design**: Full async/await support for high performance
 - **Rate Limiting**: Built-in request rate limiting with Token Bucket algorithm
 - **Caching**: Optional response caching to improve performance
@@ -210,9 +199,10 @@ genome-mcp/
 
 ### Key Components
 
-- **Server Capabilities**: Define available operations and features
-- **Request Execution**: Support for single, batch, and streaming requests
-- **Health Monitoring**: Built-in health checks and statistics tracking
+- **main.py**: FastMCP server entry point with tool decorators
+- **NCBIGeneServer**: NCBI Gene database access implementation
+- **MCP Transport**: Support for stdio, SSE, and Streamable HTTP transports
+- **Request Execution**: Support for single and batch requests
 - **Configuration Management**: JSON-based configuration system
 
 ## Contributing

@@ -2,7 +2,7 @@
   "project": {
     "name": "genome-mcp",
     "description": "Genome Model Context Protocol (MCP) server for genomic data access",
-    "version": "1.0.0",
+    "version": "0.1.1",
     "author": "Genome MCP Team",
     "email": "contact@genomemcp.org",
     "url": "https://github.com/your-org/genome-mcp",
@@ -25,7 +25,7 @@
     "keywords": ["genomics", "mcp", "bioinformatics", "api", "ncbi", "gene"],
     "entry_points": {
       "console_scripts": [
-        "genome-mcp=cli:main"
+        "genome-mcp=main:main"
       ]
     }
   },
@@ -34,7 +34,8 @@
       "aiohttp>=3.8.0",
       "pydantic>=2.0.0",
       "structlog>=23.0.0",
-      "typing-extensions>=4.0.0"
+      "typing-extensions>=4.0.0",
+      "fastmcp>=2.0.0"
     ],
     "optional": [
       "pytest>=7.0.0",

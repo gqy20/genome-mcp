@@ -2,7 +2,7 @@
   "mcpServers": {
     "genome-mcp": {
       "command": "uv",
-      "args": ["run", "python", "-m", "cli", "server"],
+      "args": ["run", "python", "main.py"],
       "env": {
         "PYTHONPATH": "${workspaceFolder}/src"
       }

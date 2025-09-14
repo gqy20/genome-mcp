@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "genome-mcp"
-version = "0.1.0"
+version = "0.1.1"
 description = "Genome Model Context Protocol (MCP) server for genomic data access"
 authors = [
-    {name = "Genome MCP Team", email = "contact@genomemcp.org"},
+    {name = "gqy20", email = "qingyu_ge@foxmail.com"},
 ]
 maintainers = [
-    {name = "Genome MCP Team", email = "contact@genomemcp.org"},
+    {name = "gqy20", email = "qingyu_ge@foxmail.com"},
 ]
 license = {text = "MIT"}
 readme = "README.md"
@@ -38,6 +38,7 @@ dependencies = [
     "typing-extensions>=4.0.0",
     "pyyaml>=6.0",
     "psutil>=5.9.0",
+    "fastmcp>=2.0.0",
 ]
 
 [project.optional-dependencies]
@@ -52,13 +53,13 @@ dev = [
 ]
 
 [project.scripts]
-genome-mcp = "genome_mcp.cli:cli_entry_point"
+genome-mcp = "main:main"
 
 [project.urls]
-Homepage = "https://github.com/your-org/genome-mcp"
-Documentation = "https://github.com/your-org/genome-mcp#readme"
-Repository = "https://github.com/your-org/genome-mcp.git"
-"Bug Tracker" = "https://github.com/your-org/genome-mcp/issues"
+Homepage = "https://github.com/gqy20/genome-mcp"
+Documentation = "https://github.com/gqy20/genome-mcp#readme"
+Repository = "https://github.com/gqy20/genome-mcp.git"
+"Bug Tracker" = "https://github.com/gqy20/genome-mcp/issues"
 
 [tool.uv]
 dev-dependencies = [
