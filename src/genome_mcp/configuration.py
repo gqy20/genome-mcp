@@ -63,7 +63,7 @@ class APIConfig(BaseModel):
     retry_delay: float = Field(
         1.0, ge=0.1, le=10.0, description="Delay between retries in seconds"
     )
-    user_agent: str = Field("Genome-MCP/1.0.0", description="User agent string")
+    user_agent: str = Field("Genome-MCP/0.1.0", description="User agent string")
 
 
 class NCBIConfig(BaseModel):
@@ -132,7 +132,7 @@ class GenomeMCPConfig(BaseModel):
 
     # Core settings
     app_name: str = Field("genome-mcp", description="Application name")
-    version: str = Field("1.0.0", description="Application version")
+    version: str = Field("0.1.0", description="Application version")
     debug: bool = Field(False, description="Enable debug mode")
 
     # Feature flags

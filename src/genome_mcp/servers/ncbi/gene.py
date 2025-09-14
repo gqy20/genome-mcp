@@ -31,7 +31,7 @@ class NCBIGeneServer(BaseMCPServer):
     def _define_capabilities(self) -> ServerCapabilities:
         return ServerCapabilities(
             name="NCBIGeneServer",
-            version="1.0.0",
+            version="0.1.0",
             description="NCBI Gene database MCP server",
             operations=[
                 "get_gene_info",
