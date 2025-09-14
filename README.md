@@ -2,8 +2,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![Publish](https://github.com/your-org/genome-mcp/workflows/Publish/badge.svg)](https://github.com/your-org/genome-mcp/actions/workflows/publish.yml)
-[![Code Quality](https://github.com/your-org/genome-mcp/workflows/Quality/badge.svg)](https://github.com/your-org/genome-mcp/actions/workflows/quality.yml)
+[![Publish](https://github.com/gqy20/genome-mcp/workflows/Publish/badge.svg)](https://github.com/gqy20/genome-mcp/actions/workflows/publish.yml)
+[![Code Quality](https://github.com/gqy20/genome-mcp/workflows/Quality/badge.svg)](https://github.com/gqy20/genome-mcp/actions/workflows/quality.yml)
 [![PyPI version](https://badge.fury.io/py/genome-mcp.svg)](https://badge.fury.io/py/genome-mcp)
 
 A Model Context Protocol (MCP) server that provides unified access to genomic databases through a standardized API interface. Built with async architecture and designed for AI-tool integration using the FastMCP framework.
@@ -15,7 +15,7 @@ A Model Context Protocol (MCP) server that provides unified access to genomic da
 - **Async Performance**: High-performance async/await architecture
 - **Rate Limiting & Caching**: Built-in request optimization and response caching
 - **Type Safety**: Full type hints with Pydantic models
-- **CLI Interface**: Command-line interface for direct database queries
+- **FastMCP Framework**: Built on FastMCP for standardized MCP protocol implementation
 - **Modern Python**: Uses uv for dependency management and modern packaging
 
 ## Installation
@@ -220,20 +220,21 @@ If you use Genome MCP in your research, please cite:
 ```bibtex
 @software{genome_mcp,
   title={Genome MCP: Model Context Protocol Server for Genomic Data},
-  author={Genome MCP Team},
+  author={gqy20},
   year={2025},
-  url={https://github.com/your-org/genome-mcp}
+  url={https://github.com/gqy20/genome-mcp}
 }
 ```
 
 ## Support
 
-- **Documentation**: [https://github.com/your-org/genome-mcp#readme](https://github.com/your-org/genome-mcp#readme)
-- **Issues**: [https://github.com/your-org/genome-mcp/issues](https://github.com/your-org/genome-mcp/issues)
-- **Discussions**: [https://github.com/your-org/genome-mcp/discussions](https://github.com/your-org/genome-mcp/discussions)
+- **Documentation**: [https://github.com/gqy20/genome-mcp#readme](https://github.com/gqy20/genome-mcp#readme)
+- **Issues**: [https://github.com/gqy20/genome-mcp/issues](https://github.com/gqy20/genome-mcp/issues)
+- **Discussions**: [https://github.com/gqy20/genome-mcp/discussions](https://github.com/gqy20/genome-mcp/discussions)
 
 ## Acknowledgments
 
 - [NCBI](https://www.ncbi.nlm.nih.gov/) for providing comprehensive genomic databases
 - [Model Context Protocol](https://modelcontextprotocol.io/) for enabling AI-tool integration
+- [FastMCP](https://github.com/gofastmcp/fastmcp) for the MCP framework implementation
 - [uv](https://github.com/astral-sh/uv) for modern Python package management
