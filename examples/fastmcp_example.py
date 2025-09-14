@@ -7,8 +7,8 @@ import asyncio
 import sys
 import os
 
-# Add project root to Python path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add src to Python path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 async def example_usage():
     """Example usage of Genome MCP tools"""
@@ -17,10 +17,7 @@ async def example_usage():
     
     try:
         # Import tools
-        import main
-        get_gene_info = main.get_gene_info
-        search_genes = main.search_genes
-        batch_gene_info = main.batch_gene_info
+        from genome_mcp.main import get_gene_info, search_genes, batch_gene_info
         
         # Example 1: Search for genes
         print("1. Searching for genes related to 'cancer'...")

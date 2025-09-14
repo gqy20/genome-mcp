@@ -13,12 +13,12 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 async def test_gene_info():
     """Test get_gene_info function"""
     try:
-        from main import get_gene_info
+        from genome_mcp.main import get_gene_info
         
         print("Testing get_gene_info...")
         # Call the tool function correctly
         # First try searching for TP53 to get the correct gene ID
-        from main import search_genes
+        from genome_mcp.main import search_genes
         search_result = await search_genes.fn(term="TP53", max_results=1)
         if search_result['results']:
             gene_id = search_result['results'][0]['gene_id']
@@ -37,7 +37,7 @@ async def test_gene_info():
 async def test_search_genes():
     """Test search_genes function"""
     try:
-        from main import search_genes
+        from genome_mcp.main import search_genes
         
         print("\nTesting search_genes...")
         result = await search_genes.fn(term="cancer", max_results=5)

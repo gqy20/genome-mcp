@@ -53,7 +53,7 @@ dev = [
 ]
 
 [project.scripts]
-genome-mcp = "main:main"
+genome-mcp = "genome_mcp.__main__:main"
 
 [project.urls]
 Homepage = "https://github.com/gqy20/genome-mcp"
