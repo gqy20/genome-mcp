@@ -55,7 +55,7 @@ genome-mcp --transport streamable-http --host localhost --port 8080
 
 ```python
 import asyncio
-from main import get_gene_info, search_genes
+from genome_mcp.main import get_gene_info, search_genes
 
 async def main():
     # Get gene information
@@ -69,6 +69,60 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+```
+
+## Configuring MCP Integration
+
+### For Claude Desktop
+
+Add the following configuration to your Claude Desktop settings:
+
+```json
+{
+  "mcpServers": {
+    "genome-mcp": {
+      "command": "uvx",
+      "args": [
+        "genome-mcp"
+      ],
+      "env": {}
+    }
+  }
+}
+```
+
+### For Cherry Studio
+
+Add the following configuration to your Cherry Studio settings:
+
+```json
+{
+  "mcpServers": {
+    "genome-mcp": {
+      "command": "uvx",
+      "args": [
+        "genome-mcp",
+        "stdio"
+      ],
+      "env": {}
+    }
+  }
+}
+```
+
+### Manual Configuration
+
+You can also run the MCP server manually:
+
+```bash
+# Run as stdio MCP server (for AI tools like Claude Desktop)
+genome-mcp --transport stdio
+
+# Run as SSE server (for web applications)
+genome-mcp --transport sse --host localhost --port 8080
+
+# Run as Streamable HTTP server (for API integration)
+genome-mcp --transport streamable-http --host localhost --port 8080
 ```
 
 ## Configuration
@@ -124,7 +178,7 @@ Create a configuration file at `~/.genome_mcp/config.json`:
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/genome-mcp.git
+git clone https://github.com/gqy20/genome-mcp.git
 cd genome-mcp
 
 # Install with uv
@@ -161,60 +215,6 @@ uv run mypy src/
 
 # Linting
 uv run ruff check src/ tests/
-```
-
-## Configuring MCP Integration
-
-### For Claude Desktop
-
-Add the following configuration to your Claude Desktop settings:
-
-```json
-{
-  "mcpServers": {
-    "genome-mcp": {
-      "command": "uvx",
-      "args": [
-        "genome-mcp"
-      ],
-      "env": {}
-    }
-  }
-}
-```
-
-### For Cherry Studio
-
-Add the following configuration to your Cherry Studio settings:
-
-```json
-{
-  "mcpServers": {
-    "genome-mcp": {
-      "command": "uvx",
-      "args": [
-        "genome-mcp",
-        "stdio"
-      ],
-      "env": {}
-    }
-  }
-}
-```
-
-### Manual Configuration
-
-You can also run the MCP server manually:
-
-```bash
-# Run as stdio MCP server (for AI tools like Claude Desktop)
-genome-mcp --transport stdio
-
-# Run as SSE server (for web applications)
-genome-mcp --transport sse --host localhost --port 8080
-
-# Run as Streamable HTTP server (for API integration)
-genome-mcp --transport streamable-http --host localhost --port 8080
 ```
 
 ## Project Structure
