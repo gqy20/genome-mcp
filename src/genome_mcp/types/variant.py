@@ -6,7 +6,7 @@ This module contains type definitions for variant-related data structures.
 
 from typing import Optional, List, Dict, Any
 from datetime import datetime
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 from .common import DataSource, ConfidenceLevel
 
@@ -20,14 +20,16 @@ class VariantQuery(BaseModel):
     include_functional: bool = Field(True, description="Include functional predictions")
     include_related: bool = Field(False, description="Include related variants")
     
-    @validator('variant_id')
+    @field_validator('variant_id')
+    @classmethod
     def validate_variant_id(cls, v):
         """Validate variant ID."""
         if not v or not v.strip():
             raise ValueError("Variant ID cannot be empty")
         return v.strip()
     
-    @validator('assembly')
+    @field_validator('assembly')
+    @classmethod
     def validate_assembly(cls, v):
         """Validate genome assembly."""
         valid_assemblies = ["GRCh37", "GRCh38", "hg19", "hg38"]
@@ -35,8 +37,7 @@ class VariantQuery(BaseModel):
             raise ValueError(f"Assembly must be one of {valid_assemblies}")
         return v
     
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class GenomicPosition(BaseModel):
@@ -47,15 +48,23 @@ class GenomicPosition(BaseModel):
     alt_allele: str = Field(..., description="Alternate allele")
     assembly: str = Field("GRCh38", description="Genome assembly version")
     
-    @validator('ref_allele', 'alt_allele')
-    def validate_alleles(cls, v):
-        """Validate alleles."""
+    @field_validator('ref_allele')
+    @classmethod
+    def validate_ref_allele(cls, v):
+        """Validate reference allele."""
         if not v or not v.strip():
             raise ValueError("Allele cannot be empty")
         return v.strip().upper()
     
-    class Config:
-        use_enum_values = True
+    @field_validator('alt_allele')
+    @classmethod
+    def validate_alt_allele(cls, v):
+        """Validate alternate allele."""
+        if not v or not v.strip():
+            raise ValueError("Allele cannot be empty")
+        return v.strip().upper()
+    
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class ClinicalSignificance(BaseModel):
@@ -66,8 +75,7 @@ class ClinicalSignificance(BaseModel):
     source: DataSource = Field(..., description="Data source")
     last_updated: datetime = Field(default_factory=datetime.now, description="Last update timestamp")
     
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class PopulationFrequency(BaseModel):
@@ -77,8 +85,7 @@ class PopulationFrequency(BaseModel):
     sample_size: int = Field(..., ge=0, description="Sample size")
     source: DataSource = Field(..., description="Data source")
     
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class FunctionalPrediction(BaseModel):
@@ -89,8 +96,7 @@ class FunctionalPrediction(BaseModel):
     confidence: ConfidenceLevel = Field(ConfidenceLevel.UNKNOWN, description="Prediction confidence")
     source: DataSource = Field(..., description="Data source")
     
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class VariantInfo(BaseModel):
@@ -109,8 +115,7 @@ class VariantInfo(BaseModel):
     sources: List[DataSource] = Field(default_factory=list, description="Data sources")
     last_updated: datetime = Field(default_factory=datetime.now, description="Last update timestamp")
     
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class VariantResponse(BaseModel):
@@ -121,8 +126,7 @@ class VariantResponse(BaseModel):
     warnings: List[str] = Field(default_factory=list, description="Warning messages")
     execution_time: float = Field(0.0, ge=0.0, description="Query execution time in seconds")
     
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class RegionVariantQuery(BaseModel):
@@ -136,17 +140,19 @@ class RegionVariantQuery(BaseModel):
     max_frequency: Optional[float] = Field(None, ge=0.0, le=1.0, description="Maximum allele frequency")
     limit: int = Field(100, ge=1, le=1000, description="Maximum number of results")
     
-    @validator('start', 'end')
-    def validate_positions(cls, start, end, values):
+    @field_validator('end')
+    @classmethod
+    def validate_positions(cls, v, values):
         """Validate start and end positions."""
-        if start > end:
-            raise ValueError("Start position must be less than or equal to end position")
-        if end - start > 1000000:  # 1MB limit
-            raise ValueError("Region size cannot exceed 1MB")
-        return start, end
+        start = values.get('start')
+        if start is not None:
+            if v < start:
+                raise ValueError("End position must be greater than or equal to start position")
+            if v - start > 1000000:  # 1MB limit
+                raise ValueError("Region size cannot exceed 1MB")
+        return v
     
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class RegionVariantResponse(BaseModel):
@@ -157,5 +163,4 @@ class RegionVariantResponse(BaseModel):
     warnings: List[str] = Field(default_factory=list, description="Warning messages")
     execution_time: float = Field(0.0, ge=0.0, description="Query execution time in seconds")
     
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)

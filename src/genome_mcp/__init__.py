@@ -13,23 +13,54 @@ __version__ = "0.1.0"
 __author__ = "Genomics MCP Team"
 __email__ = "team@genomics-mcp.org"
 
-from .core.models import GeneInfo, VariantInfo, DataSource
-from .core.exceptions import GenomicsMCPError, APIError, DataValidationError
+from .types.common import DataSource, ConfidenceLevel
 from .types.gene import GeneQuery, GeneResponse
 from .types.variant import VariantQuery, VariantResponse
+from .exceptions import (
+    GenomeMCPError,
+    ConfigurationError,
+    ValidationError,
+    DataNotFoundError,
+    DataFormatError,
+    APIError,
+    RateLimitError,
+    AuthenticationError,
+    NetworkError,
+    CacheError,
+    TimeoutError,
+    ResourceError,
+    BatchProcessingError,
+    QuerySyntaxError,
+    ServerError,
+    DatabaseError,
+    create_error_from_exception,
+)
 
 __all__ = [
     "__version__",
     "__author__", 
     "__email__",
-    "GeneInfo",
-    "VariantInfo", 
     "DataSource",
-    "GenomicsMCPError",
-    "APIError",
-    "DataValidationError",
+    "ConfidenceLevel",
     "GeneQuery",
     "GeneResponse",
     "VariantQuery",
     "VariantResponse",
+    "GenomeMCPError",
+    "ConfigurationError",
+    "ValidationError",
+    "DataNotFoundError",
+    "DataFormatError",
+    "APIError",
+    "RateLimitError",
+    "AuthenticationError",
+    "NetworkError",
+    "CacheError",
+    "TimeoutError",
+    "ResourceError",
+    "BatchProcessingError",
+    "QuerySyntaxError",
+    "ServerError",
+    "DatabaseError",
+    "create_error_from_exception",
 ]

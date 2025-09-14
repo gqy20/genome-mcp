@@ -6,7 +6,7 @@ This module contains type definitions for gene-related data structures.
 
 from typing import Optional, List, Dict, Any
 from datetime import datetime
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 from .common import DataSource, ConfidenceLevel
 
@@ -20,22 +20,23 @@ class GeneQuery(BaseModel):
     include_pathways: bool = Field(False, description="Include pathway information")
     include_expression: bool = Field(False, description="Include expression data")
     
-    @validator('gene_symbol')
+    @field_validator('gene_symbol')
+    @classmethod
     def validate_gene_symbol(cls, v):
         """Validate gene symbol."""
         if not v or not v.strip():
             raise ValueError("Gene symbol cannot be empty")
         return v.strip().upper()
     
-    @validator('species')
+    @field_validator('species')
+    @classmethod
     def validate_species(cls, v):
         """Validate species name."""
         if not v or not v.strip():
             raise ValueError("Species name cannot be empty")
         return v.strip().lower().replace(" ", "_")
     
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class GeneLocation(BaseModel):
@@ -46,22 +47,25 @@ class GeneLocation(BaseModel):
     strand: str = Field(..., description="Strand (+ or -)")
     assembly: str = Field("GRCh38", description="Genome assembly version")
     
-    @validator('strand')
+    @field_validator('strand')
+    @classmethod
     def validate_strand(cls, v):
         """Validate strand."""
         if v not in ['+', '-']:
             raise ValueError("Strand must be '+' or '-'")
         return v
     
-    @validator('start', 'end')
-    def validate_positions(cls, start, end, values):
+    @field_validator('end')
+    @classmethod
+    def validate_positions(cls, v, info):
         """Validate start and end positions."""
-        if start > end:
-            raise ValueError("Start position must be less than or equal to end position")
-        return start, end
+        data = info.data
+        start = data.get('start')
+        if start is not None and v < start:
+            raise ValueError("End position must be greater than or equal to start position")
+        return v
     
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class GeneInfo(BaseModel):
@@ -84,8 +88,7 @@ class GeneInfo(BaseModel):
     sources: List[DataSource] = Field(default_factory=list, description="Data sources")
     last_updated: datetime = Field(default_factory=datetime.now, description="Last update timestamp")
     
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class GeneResponse(BaseModel):
@@ -97,8 +100,7 @@ class GeneResponse(BaseModel):
     warnings: List[str] = Field(default_factory=list, description="Warning messages")
     execution_time: float = Field(0.0, ge=0.0, description="Query execution time in seconds")
     
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class BatchGeneQuery(BaseModel):
@@ -108,7 +110,8 @@ class BatchGeneQuery(BaseModel):
     include_synonyms: bool = Field(True, description="Include gene synonyms")
     include_function: bool = Field(True, description="Include functional annotations")
     
-    @validator('gene_symbols')
+    @field_validator('gene_symbols')
+    @classmethod
     def validate_gene_symbols(cls, v):
         """Validate gene symbols list."""
         if not v:
@@ -117,8 +120,7 @@ class BatchGeneQuery(BaseModel):
             raise ValueError("Maximum 100 gene symbols allowed in batch query")
         return [symbol.strip().upper() for symbol in v if symbol.strip()]
     
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class BatchGeneResponse(BaseModel):
@@ -129,5 +131,4 @@ class BatchGeneResponse(BaseModel):
     warnings: List[str] = Field(default_factory=list, description="Warning messages")
     execution_time: float = Field(0.0, ge=0.0, description="Query execution time in seconds")
     
-    class Config:
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
