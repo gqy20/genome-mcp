@@ -42,6 +42,8 @@ class NCBIGeneServer(BaseMCPServer):
                 "get_gene_pathways",
                 "batch_gene_info",
                 "search_by_region",
+                "search_by_region_enhanced",  # Enhanced region search with format support
+                "batch_gene_homologs",  # Batch homologs search
             ],
             supports_batch=True,
             supports_streaming=False,
@@ -75,6 +77,10 @@ class NCBIGeneServer(BaseMCPServer):
             return await self._batch_gene_info(params)
         elif operation == "search_by_region":
             return await self._search_by_region(params)
+        elif operation == "search_by_region_enhanced":
+            return await self._search_by_region_enhanced(params)
+        elif operation == "batch_gene_homologs":
+            return await self._batch_gene_homologs(params)
         else:
             raise ValidationError(f"Unknown operation: {operation}")
 
@@ -516,3 +522,129 @@ class NCBIGeneServer(BaseMCPServer):
         except Exception:
             # Fallback to basic summary
             return f"Gene summary for UID: {gene_uid}"
+
+    async def _search_by_region_enhanced(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Enhanced search for genes in a genomic region with format support.
+
+        Args:
+            params: Parameters
+                - region: Genomic region string (required) - supports formats:
+                  "chr1:1000-2000", "chr1[1000-2000]", "1:1000-2000", "1[1000-2000]"
+                - species: Species name (optional, default: human)
+                - max_results: Maximum results (optional, default: 50)
+        """
+        region = params.get("region")
+        if not region:
+            raise ValidationError("region is required", field_name="region")
+
+        species = params.get("species", "human")
+        max_results = params.get("max_results", 50)
+
+        # Parse the region string
+        try:
+            parsed_region = GenomicDataParser.parse_genomic_position(region)
+        except ValidationError as e:
+            raise ValidationError(f"Invalid region format: {str(e)}", field_name="region")
+
+        # Validate that we have a complete region
+        if parsed_region["start"] is None or parsed_region["end"] is None:
+            raise ValidationError("Region must include start and end positions", field_name="region")
+
+        # Call the existing search_by_region method with parsed parameters
+        return await self._search_by_region({
+            "chromosome": parsed_region["chromosome"],
+            "start": parsed_region["start"],
+            "end": parsed_region["end"],
+            "species": species,
+            "max_results": max_results,
+        })
+
+    async def _batch_gene_homologs(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Get homologs for multiple genes in batch.
+
+        Args:
+            params: Parameters
+                - gene_ids: List of gene IDs (required)
+                - source_species: Source species (optional, default: human)
+                - target_species: List of target species (optional)
+                - max_batch_size: Maximum batch size (optional, default: 25)
+        """
+        gene_ids = params.get("gene_ids", [])
+        if not gene_ids or not isinstance(gene_ids, list):
+            raise ValidationError(
+                "gene_ids must be a non-empty list", field_name="gene_ids"
+            )
+
+        if len(gene_ids) > 100:  # Safety limit
+            raise ValidationError(
+                f"Batch size {len(gene_ids)} exceeds maximum 100",
+                field_name="gene_ids",
+            )
+
+        source_species = params.get("source_species", "human")
+        target_species = params.get("target_species")
+        max_batch_size = min(params.get("max_batch_size", 25), 50)
+
+        # Process in batches to avoid overwhelming the API
+        all_results = {}
+        
+        for i in range(0, len(gene_ids), max_batch_size):
+            batch_gene_ids = gene_ids[i:i + max_batch_size]
+            
+            # Create tasks for concurrent execution
+            tasks = []
+            for gene_id in batch_gene_ids:
+                task = self._get_gene_homologs({
+                    "gene_id": gene_id,
+                    "species": source_species,
+                    "target_species": target_species,
+                })
+                tasks.append(task)
+            
+            try:
+                # Execute batch concurrently
+                batch_results = await asyncio.gather(*tasks, return_exceptions=True)
+                
+                # Process results
+                for gene_id, result in zip(batch_gene_ids, batch_results):
+                    if isinstance(result, Exception):
+                        all_results[gene_id] = {
+                            "success": False,
+                            "error": str(result),
+                            "error_type": type(result).__name__,
+                            "gene_id": gene_id,
+                            "species": source_species,
+                            "homologs": [],
+                        }
+                    else:
+                        all_results[gene_id] = {
+                            "success": True,
+                            "gene_id": gene_id,
+                            "species": source_species,
+                            "homologs": result.get("homologs", []),
+                        }
+                        
+            except Exception as e:
+                # If batch fails completely, record error for all genes in batch
+                for gene_id in batch_gene_ids:
+                    all_results[gene_id] = {
+                        "success": False,
+                        "error": f"Batch processing failed: {str(e)}",
+                        "error_type": "BatchError",
+                        "gene_id": gene_id,
+                        "species": source_species,
+                        "homologs": [],
+                    }
+
+        # Calculate statistics
+        successful_count = len([r for r in all_results.values() if r["success"]])
+        failed_count = len(all_results) - successful_count
+
+        return {
+            "source_species": source_species,
+            "target_species": target_species,
+            "total_genes": len(gene_ids),
+            "successful": successful_count,
+            "failed": failed_count,
+            "results": all_results,
+        }

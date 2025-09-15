@@ -21,7 +21,7 @@ from genome_mcp.exceptions import GenomeMCPError
 # Create FastMCP server instance
 mcp = FastMCP(
     name="Genome MCP Server",
-    version="0.1.4",
+    version="0.1.5",
     instructions="Genomic data MCP server for NCBI Gene database access"
 )
 
@@ -148,6 +148,36 @@ async def search_by_region(
 
 
 @mcp.tool()
+async def search_by_region_enhanced(
+    region: str,
+    species: str = "human",
+    max_results: int = 50
+) -> Dict[str, Any]:
+    """
+    Search for genes in a genomic region using standard formats.
+    
+    Supports multiple formats:
+    - "chr1:1000-2000" or "1:1000-2000" (colon-separated)
+    - "chr1[1000-2000]" or "1[1000-2000]" (bracket notation)
+    
+    Args:
+        region: Genomic region string (e.g., "chr1:1000-2000", "chr1[1000-2000]")
+        species: Species name (default: human)
+        max_results: Maximum number of results (default: 50)
+        
+    Returns:
+        Dictionary containing genes in the region
+    """
+    await initialize_server()
+    params = {
+        "region": region,
+        "species": species,
+        "max_results": max_results
+    }
+    return await _gene_server.execute_request("search_by_region_enhanced", params)
+
+
+@mcp.tool()
 async def get_gene_homologs(
     gene_id: str,
     species: str = "human",
@@ -171,6 +201,35 @@ async def get_gene_homologs(
         "target_species": target_species
     }
     return await _gene_server.execute_request("get_gene_homologs", params)
+
+
+@mcp.tool()
+async def batch_gene_homologs(
+    gene_ids: List[str],
+    source_species: str = "human",
+    target_species: Optional[List[str]] = None,
+    max_batch_size: int = 25
+) -> Dict[str, Any]:
+    """
+    Get homologs for multiple genes in batch.
+    
+    Args:
+        gene_ids: List of gene IDs to search for homologs
+        source_species: Source species (default: human)
+        target_species: List of target species to filter results (optional)
+        max_batch_size: Maximum batch size for processing (default: 25)
+        
+    Returns:
+        Dictionary containing batch results with success/failure statistics
+    """
+    await initialize_server()
+    params = {
+        "gene_ids": gene_ids,
+        "source_species": source_species,
+        "target_species": target_species,
+        "max_batch_size": max_batch_size
+    }
+    return await _gene_server.execute_request("batch_gene_homologs", params)
 
 
 def main():

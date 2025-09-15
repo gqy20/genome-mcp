@@ -24,6 +24,8 @@ class GenomicDataParser:
         r"^(chr)?([1-9]|1[0-9]|2[0-2]|X|Y|MT?)$", re.IGNORECASE
     )
     GENOMIC_POSITION_PATTERN = re.compile(r"^(\d+):(\d+)-(\d+)$")
+    GENOMIC_POSITION_PATTERN_WITH_CHR = re.compile(r"^(chr)?([1-9]|1[0-9]|2[0-2]|X|Y|MT?):(\d+)-(\d+)$", re.IGNORECASE)
+    GENOMIC_POSITION_BRACKET_PATTERN = re.compile(r"^(chr)?([1-9]|1[0-9]|2[0-2]|X|Y|MT?)\[(\d+)-(\d+)\]$", re.IGNORECASE)
     RSID_PATTERN = re.compile(r"^rs\d+$")
     ENSEMBL_GENE_PATTERN = re.compile(r"^ENSG\d{11}$")
     ENSEMBL_TRANSCRIPT_PATTERN = re.compile(r"^ENST\d{11}$")
@@ -35,7 +37,7 @@ class GenomicDataParser:
         Parse genomic position string.
 
         Args:
-            position_str: Genomic position string (e.g., "chr1:1000-2000")
+            position_str: Genomic position string (e.g., "chr1:1000-2000", "chr1[1000-2000]")
 
         Returns:
             Parsed genomic position dictionary
@@ -48,15 +50,25 @@ class GenomicDataParser:
             position_str = position_str.strip().upper()
 
             # Handle different formats
-            if ":" in position_str and "-" in position_str:
-                # Format: chr1:1000-2000 or 1:1000-2000
-                match = cls.GENOMIC_POSITION_PATTERN.search(position_str)
+            if "[" in position_str and "]" in position_str and "-" in position_str:
+                # Format: chr1[1000-2000] or 1[1000-2000]
+                match = cls.GENOMIC_POSITION_BRACKET_PATTERN.search(position_str)
                 if not match:
                     raise ValueError(f"Invalid genomic position format: {position_str}")
 
-                chromosome = match.group(1)
-                start = int(match.group(2))
-                end = int(match.group(3))
+                chromosome = match.group(1) + match.group(2) if match.group(1) else match.group(2)
+                start = int(match.group(3))
+                end = int(match.group(4))
+
+            elif ":" in position_str and "-" in position_str:
+                # Format: chr1:1000-2000 or 1:1000-2000
+                match = cls.GENOMIC_POSITION_PATTERN_WITH_CHR.search(position_str)
+                if not match:
+                    raise ValueError(f"Invalid genomic position format: {position_str}")
+
+                chromosome = match.group(1) + match.group(2) if match.group(1) else match.group(2)
+                start = int(match.group(3))
+                end = int(match.group(4))
 
             elif ":" in position_str:
                 # Format: chr1:1000 (single position)

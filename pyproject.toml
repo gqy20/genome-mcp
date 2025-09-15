@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "genome-mcp"
-version = "0.1.4"
+version = "0.1.5"
 description = "Genome Model Context Protocol (MCP) server for genomic data access"
 authors = [
     {name = "gqy20", email = "qingyu_ge@foxmail.com"},
