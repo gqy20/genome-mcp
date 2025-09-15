@@ -4,31 +4,31 @@ Tests for HTTP utility functions.
 This module contains tests for HTTP client, rate limiting, and other HTTP-related utilities.
 """
 
-import pytest
 import asyncio
-import aiohttp
-import time
-from unittest.mock import Mock, AsyncMock, patch
-from typing import Dict, Any, List
-import sys
 import os
+import sys
+import time
+from unittest.mock import AsyncMock, patch
+
+import aiohttp
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
+from genome_mcp.exceptions import (
+    AuthenticationError,
+    NetworkError,
+    RateLimitError,
+    TimeoutError,
+    ValidationError,
+)
 from genome_mcp.http_utils import (
     HTTPClient,
     RateLimiter,
-    fetch_with_retry,
-    validate_url,
-    sanitize_url,
     batch_requests,
-)
-from genome_mcp.exceptions import (
-    ValidationError,
-    NetworkError,
-    RateLimitError,
-    AuthenticationError,
-    TimeoutError,
+    fetch_with_retry,
+    sanitize_url,
+    validate_url,
 )
 
 

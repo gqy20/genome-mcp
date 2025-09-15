@@ -7,17 +7,18 @@ and managing network operations with proper error handling and retry logic.
 
 import asyncio
 import time
-from typing import Optional, Dict, Any, Union, List, Callable
+from typing import Any, Callable, Dict, List, Optional, Union
 from urllib.parse import urljoin, urlparse
+
 import aiohttp
 import structlog
 
 from genome_mcp.exceptions import (
     APIError,
-    NetworkError,
-    TimeoutError,
     AuthenticationError,
+    NetworkError,
     RateLimitError,
+    TimeoutError,
     create_error_from_exception,
 )
 
@@ -168,7 +169,7 @@ class HTTPClient:
                     # Parse successful response
                     try:
                         return await response.json()
-                    except ValueError as e:
+                    except ValueError:
                         # Return raw text if JSON parsing fails
                         return {"data": await response.text()}
 

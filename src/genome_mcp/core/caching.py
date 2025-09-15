@@ -7,10 +7,9 @@ and common operations.
 
 import hashlib
 import json
-import time
-from typing import Any, Dict, List, Optional, Union
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any, Dict, List, Union
 
 from genome_mcp.exceptions import ValidationError
 

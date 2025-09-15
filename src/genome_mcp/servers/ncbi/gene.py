@@ -5,22 +5,18 @@ This module provides MCP server functionality for NCBI Gene database operations.
 """
 
 import asyncio
-import json
-from typing import Dict, List, Optional, Any, AsyncGenerator
-from urllib.parse import urljoin, urlencode
+from typing import Any, Dict
+from urllib.parse import urlencode
+
 import structlog
 
-from genome_mcp.servers.base import BaseMCPServer, ServerCapabilities
-from genome_mcp.configuration import GenomeMCPConfig
-from genome_mcp.http_utils import HTTPClient
-from genome_mcp.data.parsers import GenomicDataParser, JSONDataParser
-from genome_mcp.data.validators import GenomicValidator
+from genome_mcp.data.parsers import GenomicDataParser
 from genome_mcp.exceptions import (
     APIError,
-    ValidationError,
     DataNotFoundError,
-    create_error_from_exception,
+    ValidationError,
 )
+from genome_mcp.servers.base import BaseMCPServer, ServerCapabilities
 
 logger = structlog.get_logger(__name__)
 

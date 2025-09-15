@@ -10,11 +10,11 @@ Genome MCP 使用效果测试脚本
 5. HTTP客户端测试
 """
 
-import sys
-import os
 import asyncio
-import tempfile
 import json
+import os
+import sys
+import tempfile
 from pathlib import Path
 
 # 添加src到路径
@@ -29,7 +29,7 @@ def test_core_functionality():
     print("🔧 测试核心功能...")
 
     # 测试缓存键生成
-    from core import generate_cache_key, format_duration, format_file_size
+    from core import format_duration, format_file_size, generate_cache_key
 
     key = generate_cache_key("test", "gene:TP53", species="homo_sapiens")
     assert key.startswith("test:")
@@ -52,10 +52,8 @@ def test_exception_handling():
     print("🚨 测试异常处理...")
 
     from exceptions import (
-        ValidationError,
         APIError,
-        NetworkError,
-        DataNotFoundError,
+        ValidationError,
         create_error_from_exception,
     )
 
@@ -90,10 +88,10 @@ def test_configuration():
     print("⚙️ 测试配置管理...")
 
     from configuration import (
-        GenomeMCPConfig,
         ConfigManager,
-        create_default_config,
+        GenomeMCPConfig,
         LogLevel,
+        create_default_config,
     )
 
     # 测试默认配置创建
@@ -143,7 +141,7 @@ def test_data_processing():
 
     from data.parsers import GenomicDataParser
     from data.validators import GenomicValidator
-    from type_defs.common import DataSource, ConfidenceLevel
+    from type_defs.common import ConfidenceLevel, DataSource
 
     # 测试基因组位置解析
     position = GenomicDataParser.parse_genomic_position("1:1000-2000")
@@ -201,7 +199,6 @@ def test_integration():
 
     # 测试模块间协作
     from core import generate_cache_key
-    from exceptions import ValidationError
     from data.validators import GenomicValidator
 
     # 使用缓存和验证协作

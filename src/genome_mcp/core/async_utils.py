@@ -5,9 +5,6 @@ This module provides async decorators and utility functions.
 """
 
 import asyncio
-import time
-from typing import Any, Callable, Optional, Union
-from functools import wraps
 
 from genome_mcp.exceptions import TimeoutError
 
@@ -100,23 +97,17 @@ def log_execution_time(func_name: str = None):
 
     def decorator(func):
         async def async_wrapper(*args, **kwargs):
-            start_time = time.time()
             try:
                 result = await func(*args, **kwargs)
-                execution_time = time.time() - start_time
                 return result
-            except Exception as e:
-                execution_time = time.time() - start_time
+            except Exception:
                 raise
 
         def sync_wrapper(*args, **kwargs):
-            start_time = time.time()
             try:
                 result = func(*args, **kwargs)
-                execution_time = time.time() - start_time
                 return result
-            except Exception as e:
-                execution_time = time.time() - start_time
+            except Exception:
                 raise
 
         if asyncio.iscoroutinefunction(func):

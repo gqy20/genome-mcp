@@ -8,12 +8,13 @@ import asyncio
 import hashlib
 import json
 import time
-from typing import Any, Dict, List, Optional, Union, Callable
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any, Dict, List, Union
+
 import structlog
 
-from ..exceptions import ValidationError, create_error_from_exception
+from ..exceptions import ValidationError
 
 logger = structlog.get_logger(__name__)
 

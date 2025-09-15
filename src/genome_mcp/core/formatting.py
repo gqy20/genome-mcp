@@ -4,10 +4,7 @@ Formatting utilities for Genome MCP.
 This module provides formatting functions for various data types.
 """
 
-import time
-from typing import Any, Dict, List, Union
 from datetime import datetime, timezone
-from pathlib import Path
 
 
 def format_duration(seconds: float) -> str:

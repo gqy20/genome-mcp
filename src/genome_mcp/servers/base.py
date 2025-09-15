@@ -5,26 +5,21 @@ This module provides the base functionality for all MCP servers in the Genome MC
 """
 
 import asyncio
-import json
-import logging
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Union, AsyncGenerator
-from pathlib import Path
 from dataclasses import dataclass, field
+from typing import Any, AsyncGenerator, Dict, List, Optional
+
 import structlog
 
 from genome_mcp.configuration import GenomeMCPConfig, get_config
-from genome_mcp.http_utils import HTTPClient, RateLimiter
 from genome_mcp.core import generate_cache_key, log_execution_time
 from genome_mcp.exceptions import (
     GenomeMCPError,
-    ConfigurationError,
-    APIError,
-    RateLimitError,
     ValidationError,
     create_error_from_exception,
 )
+from genome_mcp.http_utils import HTTPClient, RateLimiter
 
 logger = structlog.get_logger(__name__)
 

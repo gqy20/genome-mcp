@@ -12,7 +12,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 
 class CLITester:
@@ -65,7 +65,7 @@ class CLITester:
                 json.loads(json_output)
             except json.JSONDecodeError:
                 # 如果JSON解析失败，记录错误但不中断测试
-                print(f"⚠️ JSON解析警告: 输出可能包含非JSON内容")
+                print("⚠️ JSON解析警告: 输出可能包含非JSON内容")
                 print(f"前100字符: {json_output[:100]}")
                 json_output = '{"error": "Failed to parse JSON output"}'
 
@@ -383,14 +383,14 @@ class CLITester:
     def print_summary(self):
         """Print test summary."""
         total = self.passed + self.failed
-        print(f"\n📊 测试总结:")
+        print("\n📊 测试总结:")
         print(f"   总计: {total}")
         print(f"   通过: {self.passed} ✅")
         print(f"   失败: {self.failed} ❌")
         print(f"   成功率: {self.passed/total*100:.1f}%")
 
         if self.failed > 0:
-            print(f"\n❌ 失败的测试:")
+            print("\n❌ 失败的测试:")
             for result in self.test_results:
                 if result["status"] in ["FAIL", "TIMEOUT", "ERROR"]:
                     print(f"   • {result['command']}")

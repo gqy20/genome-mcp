@@ -4,9 +4,10 @@ Common type definitions for Genome MCP.
 This module contains common type definitions used across the system.
 """
 
-from enum import Enum
-from typing import Dict, Any, Optional, List
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field
 
 

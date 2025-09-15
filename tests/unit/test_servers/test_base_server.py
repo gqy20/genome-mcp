@@ -4,15 +4,14 @@ Test script for BaseMCPServer implementation.
 
 import asyncio
 import sys
-import os
-from typing import Dict, Any
 from pathlib import Path
+from typing import Any, Dict
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from genome_mcp.configuration import GenomeMCPConfig
-from genome_mcp.servers.base import BaseMCPServer, ServerCapabilities, ServerStats
+from genome_mcp.servers.base import BaseMCPServer, ServerCapabilities
 
 
 class TestServer(BaseMCPServer):

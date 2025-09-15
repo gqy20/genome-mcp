@@ -4,34 +4,34 @@ Type definitions for Genome MCP.
 This module contains type definitions for various genomic data structures.
 """
 
-from .gene import (
-    GeneQuery,
-    GeneResponse,
-    GeneInfo,
-    GeneLocation,
-    BatchGeneQuery,
-    BatchGeneResponse,
-)
-from .variant import (
-    VariantQuery,
-    VariantResponse,
-    VariantInfo,
-    GenomicPosition,
-    ClinicalSignificance,
-    PopulationFrequency,
-    FunctionalPrediction,
-    RegionVariantQuery,
-    RegionVariantResponse,
-)
 from .common import (
-    DataSource,
-    ConfidenceLevel,
     APIResponse,
+    CacheEntry,
+    ConfidenceLevel,
+    DataSource,
+    ErrorInfo,
     PaginationParams,
     PaginationResponse,
     QueryResult,
-    CacheEntry,
-    ErrorInfo,
+)
+from .gene import (
+    BatchGeneQuery,
+    BatchGeneResponse,
+    GeneInfo,
+    GeneLocation,
+    GeneQuery,
+    GeneResponse,
+)
+from .variant import (
+    ClinicalSignificance,
+    FunctionalPrediction,
+    GenomicPosition,
+    PopulationFrequency,
+    RegionVariantQuery,
+    RegionVariantResponse,
+    VariantInfo,
+    VariantQuery,
+    VariantResponse,
 )
 
 __all__ = [

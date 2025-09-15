@@ -4,11 +4,12 @@ Variant-related type definitions for Genome MCP.
 This module contains type definitions for variant-related data structures.
 """
 
-from typing import Optional, List, Dict, Any
 from datetime import datetime
-from pydantic import BaseModel, Field, field_validator, ConfigDict
+from typing import List, Optional
 
-from .common import DataSource, ConfidenceLevel
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from .common import ConfidenceLevel, DataSource
 
 
 class VariantQuery(BaseModel):

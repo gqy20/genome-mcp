@@ -4,16 +4,14 @@ Test script for NCBIGeneServer implementation.
 
 import asyncio
 import sys
-import os
-from typing import Dict, Any
 from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from genome_mcp.configuration import GenomeMCPConfig
+from genome_mcp.exceptions import APIError, DataNotFoundError, ValidationError
 from genome_mcp.servers.ncbi.gene import NCBIGeneServer
-from genome_mcp.exceptions import ValidationError, DataNotFoundError, APIError
 
 
 async def test_ncbi_gene_server():

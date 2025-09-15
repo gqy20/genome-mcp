@@ -4,21 +4,20 @@ Tests for data parser utility functions.
 This module contains tests for genomic data parsers, JSON parsers, and batch processors.
 """
 
-import pytest
-import json
-from typing import Dict, Any, List
-import sys
 import os
+import sys
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 from genome_mcp.data.parsers import (
-    GenomicDataParser,
-    JSONDataParser,
     BatchProcessor,
     DataValidator,
+    GenomicDataParser,
+    JSONDataParser,
 )
-from genome_mcp.exceptions import ValidationError, DataFormatError
+from genome_mcp.exceptions import DataFormatError, ValidationError
 
 
 class TestGenomicDataParser:

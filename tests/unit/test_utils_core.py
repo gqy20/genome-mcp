@@ -4,38 +4,36 @@ Tests for core utility functions.
 This module contains tests for the core utility functions in the utils module.
 """
 
-import pytest
 import asyncio
-import tempfile
 import os
-from pathlib import Path
-from unittest.mock import patch, MagicMock
-from datetime import datetime, timezone
-
 import sys
-import os
+import tempfile
+from datetime import datetime, timezone
+from pathlib import Path
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 from genome_mcp.core import (
-    generate_cache_key,
+    async_timeout,
+    calculate_similarity,
+    chunk_list,
+    ensure_directory,
+    flatten_list,
     format_duration,
     format_file_size,
+    generate_cache_key,
     get_timestamp,
-    sanitize_filename,
-    ensure_directory,
-    merge_dictionaries,
-    flatten_list,
-    chunk_list,
-    retry_async,
-    validate_required_fields,
-    normalize_dict,
-    safe_get_nested,
-    truncate_string,
-    calculate_similarity,
-    async_timeout,
-    memory_usage,
     log_execution_time,
+    memory_usage,
+    merge_dictionaries,
+    normalize_dict,
+    retry_async,
+    safe_get_nested,
+    sanitize_filename,
+    truncate_string,
+    validate_required_fields,
 )
 from genome_mcp.exceptions import ValidationError
 

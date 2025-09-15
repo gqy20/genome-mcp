@@ -4,27 +4,27 @@ Tests for core exception definitions.
 This module contains tests for all custom exceptions defined in the exceptions module.
 """
 
-import pytest
 from datetime import datetime
-from unittest.mock import MagicMock
+
+import pytest
 
 from genome_mcp.exceptions import (
-    GenomeMCPError,
-    ValidationError,
-    DataNotFoundError,
     APIError,
-    ConfigurationError,
     AuthenticationError,
-    RateLimitError,
-    ServerError,
-    DataFormatError,
-    NetworkError,
-    CacheError,
-    TimeoutError,
-    ResourceError,
     BatchProcessingError,
-    QuerySyntaxError,
+    CacheError,
+    ConfigurationError,
     DatabaseError,
+    DataFormatError,
+    DataNotFoundError,
+    GenomeMCPError,
+    NetworkError,
+    QuerySyntaxError,
+    RateLimitError,
+    ResourceError,
+    ServerError,
+    TimeoutError,
+    ValidationError,
 )
 
 

@@ -6,10 +6,8 @@ This script tests the CLI functionality with robust JSON parsing.
 """
 
 import json
-import os
 import subprocess
 import sys
-from pathlib import Path
 
 
 def extract_json_from_output(output):

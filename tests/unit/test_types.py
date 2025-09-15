@@ -4,16 +4,27 @@ Tests for core type definitions.
 This module contains tests for all type definitions in the types module.
 """
 
-import pytest
-from datetime import datetime
-import sys
 import os
+import sys
+from datetime import datetime
+
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from genome_mcp.type_defs.common import DataSource, ConfidenceLevel, APIResponse, PaginationParams
+from genome_mcp.type_defs.common import (
+    APIResponse,
+    ConfidenceLevel,
+    DataSource,
+    PaginationParams,
+)
 from genome_mcp.type_defs.gene import GeneInfo, GeneLocation, GeneQuery, GeneResponse
-from genome_mcp.type_defs.variant import VariantInfo, VariantConsequence, VariantFrequency
+from genome_mcp.type_defs.variant import (
+    GenomicPosition,
+    VariantInfo,
+    VariantQuery,
+    VariantResponse,
+)
 
 
 class TestCommonTypes:

@@ -4,28 +4,28 @@ Tests for configuration management.
 This module contains tests for configuration loading, validation, and management.
 """
 
-import pytest
 import json
-import yaml
-import tempfile
 import os
+import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
+
+import pytest
+import yaml
 
 from genome_mcp.configuration import (
-    GenomeMCPConfig,
-    ConfigManager,
-    get_config,
-    create_default_config,
-    LogLevel,
-    CacheConfig,
-    RateLimitConfig,
     APIConfig,
-    NCBIConfig,
+    CacheConfig,
+    ConfigManager,
     EnsemblConfig,
-    DataSourceConfig,
-    ServerConfig,
+    GenomeMCPConfig,
     LoggingConfig,
+    LogLevel,
+    NCBIConfig,
+    RateLimitConfig,
+    ServerConfig,
+    create_default_config,
+    get_config,
 )
 
 
@@ -46,7 +46,7 @@ class TestConfigModels:
 
         # Invalid TTL (too large)
         with pytest.raises(ValueError):
-            CacheConfig(ttl=0.1.00)
+            CacheConfig(ttl=100)
 
         # Invalid max_size (too small)
         with pytest.raises(ValueError):

@@ -6,17 +6,13 @@ A FastMCP-based server that provides unified access to genomic databases
 through the Model Context Protocol interface.
 """
 
-import asyncio
 import logging
-import os
-import sys
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
 
 from fastmcp import FastMCP
+
 from genome_mcp.configuration import get_config
 from genome_mcp.servers.ncbi.gene import NCBIGeneServer
-from genome_mcp.exceptions import GenomeMCPError
-
 
 # Create FastMCP server instance
 mcp = FastMCP(
