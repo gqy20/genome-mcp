@@ -1,4 +1,4 @@
-name: Publish Python Package
+name: Publish Python Package and Create Release
 
 on:
   push:
@@ -8,8 +8,14 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
     
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -23,6 +29,49 @@ jobs:
       run: |
         uv build
         uvx --from . genome-mcp --help
+    
+    - name: Extract version and changelog
+      id: extract_info
+      run: |
+        # Extract version from tag
+        VERSION=${GITHUB_REF#refs/tags/v}
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        
+        # Get the commit message for this tag
+        COMMIT_MSG=$(git log -1 --pretty=format:'%s' ${{ github.sha }})
+        echo "COMMIT_MSG=$COMMIT_MSG" >> $GITHUB_OUTPUT
+        
+        # Extract changelog from git tag annotation
+        CHANGELOG=$(git tag -l v$VERSION -n --format='%(contents)')
+        echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+        echo "$CHANGELOG" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+    
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release v${{ steps.extract_info.outputs.VERSION }}
+        body: |
+          ## Version ${{ steps.extract_info.outputs.VERSION }}
+          
+          ${{ steps.extract_info.outputs.CHANGELOG }}
+          
+          ---
+          
+          ### 安装方式
+          ```bash
+          pip install genome-mcp
+          ```
+          
+          ### 快速开始
+          ```bash
+          genome-mcp --help
+          ```
+        draft: false
+        prerelease: false
     
     - name: Publish to PyPI
       env:
