@@ -11,11 +11,11 @@ from pathlib import Path
 import sys
 
 # 添加 src 到路径
-sys.path.insert(0, str(Path(__file__).parent / "src"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from servers.ncbi.gene import NCBIGeneServer
-from configuration import GenomeMCPConfig
-from exceptions import GenomeMCPError, ValidationError, DataNotFoundError
+from genome_mcp.servers.ncbi.gene import NCBIGeneServer
+from genome_mcp.configuration import GenomeMCPConfig
+from genome_mcp.exceptions import GenomeMCPError, ValidationError, DataNotFoundError
 
 
 async def basic_gene_info_example():

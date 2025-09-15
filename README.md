@@ -1,4 +1,4 @@
-# Genome MCP - Model Context Protocol Server for Genomic Data
+# Genome MCP - 基因组数据模型上下文协议服务器
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
@@ -6,48 +6,48 @@
 [![Code Quality](https://github.com/gqy20/genome-mcp/workflows/Quality/badge.svg)](https://github.com/gqy20/genome-mcp/actions/workflows/quality.yml)
 [![PyPI version](https://badge.fury.io/py/genome-mcp.svg)](https://badge.fury.io/py/genome-mcp)
 
-A Model Context Protocol (MCP) server that provides unified access to genomic databases through a standardized API interface. Built with async architecture and designed for AI-tool integration using the FastMCP framework.
+一个基于模型上下文协议（MCP）的基因组数据服务器，通过标准化API接口提供对基因组数据库的统一访问。采用异步架构构建，专为AI工具集成而设计，使用FastMCP框架实现。
 
-## Features
+## 功能特性
 
-- **MCP Server Architecture**: Built on Model Context Protocol for seamless AI-tool integration
-- **NCBI Database Integration**: Full access to NCBI Gene database via EUtils API
-- **Async Performance**: High-performance async/await architecture
-- **Rate Limiting & Caching**: Built-in request optimization and response caching
-- **Type Safety**: Full type hints with Pydantic models
-- **FastMCP Framework**: Built on FastMCP for standardized MCP protocol implementation
-- **Modern Python**: Uses uv for dependency management and modern packaging
+- **MCP服务器架构**：基于模型上下文协议构建，实现AI工具无缝集成
+- **NCBI数据库集成**：通过EUtils API完全访问NCBI Gene数据库
+- **异步高性能**：采用高性能的async/await架构
+- **限流与缓存**：内置请求优化和响应缓存机制
+- **类型安全**：完整的类型提示和Pydantic模型
+- **FastMCP框架**：基于FastMCP实现标准化的MCP协议
+- **现代Python**：使用uv进行依赖管理和现代打包
 
-## Installation
+## 安装
 
-### Using uv (Recommended)
+### 使用uv（推荐）
 
 ```bash
-# Install with uv
+# 使用uv安装
 uv add genome-mcp
 
-# Or run directly without installation
+# 或直接运行无需安装
 uv run genome-mcp --help
 ```
 
-### Using pip
+### 使用pip
 
 ```bash
 pip install genome-mcp
 ```
 
-## Quick Start
+## 快速开始
 
-### Running as MCP Server
+### 作为MCP服务器运行
 
 ```bash
-# Run as stdio MCP server (for AI tools like Claude Desktop)
+# 作为stdio MCP服务器运行（适用于AI工具如Claude Desktop）
 genome-mcp --transport stdio
 
-# Run as SSE server (for web applications)
+# 作为SSE服务器运行（适用于Web应用）
 genome-mcp --transport sse --host localhost --port 8080
 
-# Run as Streamable HTTP server (for API integration)
+# 作为Streamable HTTP服务器运行（适用于API集成）
 genome-mcp --transport streamable-http --host localhost --port 8080
 ```
 
@@ -58,97 +58,223 @@ import asyncio
 from genome_mcp.main import get_gene_info, search_genes
 
 async def main():
-    # Get gene information
+    # 获取基因信息
     gene_info = await get_gene_info("7157")  # TP53
-    print(f"Gene: {gene_info['info']['name']}")
-    print(f"Description: {gene_info['info']['description']}")
+    print(f"基因: {gene_info['info']['name']}")
+    print(f"描述: {gene_info['info']['description']}")
     
-    # Search for genes
+    # 搜索基因
     search_results = await search_genes("cancer", species="human")
-    print(f"Found {len(search_results['results'])} genes")
+    print(f"找到 {len(search_results['results'])} 个基因")
 
 if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-## Configuring MCP Integration
+## 配置MCP集成
 
-### For Claude Desktop
+### 传输模式选择
 
-Add the following configuration to your Claude Desktop settings:
+Genome MCP支持三种传输模式，每种模式适用于不同的使用场景：
 
+1. **STDIO模式**：标准输入输出模式，适用于AI工具如Claude Desktop
+2. **SSE模式**：Server-Sent Events模式，适用于Web应用，访问地址：`http://localhost:8080/sse`
+3. **Streamable HTTP模式**：流式HTTP模式，适用于API集成，访问地址：`http://localhost:8080/mcp`
+
+### 配置方式
+
+根据您的使用场景选择相应的配置方式：
+
+#### 方式一：STDIO模式（推荐用于AI工具）
+
+适用于Claude Desktop、Cherry Studio等AI工具。
+
+**Claude Desktop配置：**
 ```json
 {
   "mcpServers": {
     "genome-mcp": {
       "command": "uvx",
-      "args": [
-        "genome-mcp"
-      ],
-      "env": {}
+      "args": ["genome-mcp"],
+      "env": {
+        "NCBI_API_KEY": "${NCBI_API_KEY}",
+        "NCBI_EMAIL": "${NCBI_EMAIL}"
+      }
     }
   }
 }
 ```
 
-### For Cherry Studio
-
-Add the following configuration to your Cherry Studio settings:
-
+**Cherry Studio配置：**
 ```json
 {
   "mcpServers": {
     "genome-mcp": {
       "command": "uvx",
-      "args": [
-        "genome-mcp",
-        "stdio"
-      ],
-      "env": {}
+      "args": ["genome-mcp", "stdio"],
+      "env": {
+        "NCBI_API_KEY": "${NCBI_API_KEY}",
+        "NCBI_EMAIL": "${NCBI_EMAIL}"
+      }
     }
   }
 }
 ```
 
-### Manual Configuration
-
-You can also run the MCP server manually:
-
+**手动运行：**
 ```bash
-# Run as stdio MCP server (for AI tools like Claude Desktop)
 genome-mcp --transport stdio
+```
 
-# Run as SSE server (for web applications)
+#### 方式二：SSE模式（推荐用于Web应用）
+
+适用于Web应用和浏览器端集成。
+
+**Claude Desktop配置：**
+```json
+{
+  "mcpServers": {
+    "genome-mcp-sse": {
+      "command": "uvx",
+      "args": ["genome-mcp", "--transport", "sse", "--host", "localhost", "--port", "8080"],
+      "env": {
+        "NCBI_API_KEY": "${NCBI_API_KEY}",
+        "NCBI_EMAIL": "${NCBI_EMAIL}"
+      }
+    }
+  }
+}
+```
+
+**Cherry Studio配置：**
+```json
+{
+  "mcpServers": {
+    "genome-mcp-sse": {
+      "command": "uvx",
+      "args": ["genome-mcp", "--transport", "sse", "--host", "localhost", "--port", "8080"],
+      "env": {
+        "NCBI_API_KEY": "${NCBI_API_KEY}",
+        "NCBI_EMAIL": "${NCBI_EMAIL}"
+      }
+    }
+  }
+}
+```
+
+**手动运行：**
+```bash
 genome-mcp --transport sse --host localhost --port 8080
+```
 
-# Run as Streamable HTTP server (for API integration)
+**Web访问：**
+```
+http://localhost:8080/sse
+```
+
+#### 方式三：Streamable HTTP模式（推荐用于API集成）
+
+适用于API集成和微服务架构。
+
+**Claude Desktop配置：**
+```json
+{
+  "mcpServers": {
+    "genome-mcp-http": {
+      "command": "uvx",
+      "args": ["genome-mcp", "--transport", "streamable-http", "--host", "localhost", "--port", "8080"],
+      "env": {
+        "NCBI_API_KEY": "${NCBI_API_KEY}",
+        "NCBI_EMAIL": "${NCBI_EMAIL}"
+      }
+    }
+  }
+}
+```
+
+**Cherry Studio配置：**
+```json
+{
+  "mcpServers": {
+    "genome-mcp-http": {
+      "command": "uvx",
+      "args": ["genome-mcp", "--transport", "streamable-http", "--host", "localhost", "--port", "8080"],
+      "env": {
+        "NCBI_API_KEY": "${NCBI_API_KEY}",
+        "NCBI_EMAIL": "${NCBI_EMAIL}"
+      }
+    }
+  }
+}
+```
+
+**手动运行：**
+```bash
 genome-mcp --transport streamable-http --host localhost --port 8080
 ```
 
-## Configuration
+**API访问：**
+```
+http://localhost:8080/mcp
+```
 
-### Environment Variables
+### 完整配置示例
+
+如果您需要同时使用多种传输模式，可以使用以下完整配置：
+
+```json
+{
+  "mcpServers": {
+    "genome-mcp": {
+      "command": "uvx",
+      "args": ["genome-mcp"],
+      "env": {
+        "NCBI_API_KEY": "${NCBI_API_KEY}",
+        "NCBI_EMAIL": "${NCBI_EMAIL}"
+      }
+    },
+    "genome-mcp-sse": {
+      "command": "uvx",
+      "args": ["genome-mcp", "--transport", "sse", "--host", "localhost", "--port", "8080"],
+      "env": {
+        "NCBI_API_KEY": "${NCBI_API_KEY}",
+        "NCBI_EMAIL": "${NCBI_EMAIL}"
+      }
+    },
+    "genome-mcp-http": {
+      "command": "uvx",
+      "args": ["genome-mcp", "--transport", "streamable-http", "--host", "localhost", "--port", "8080"],
+      "env": {
+        "NCBI_API_KEY": "${NCBI_API_KEY}",
+        "NCBI_EMAIL": "${NCBI_EMAIL}"
+      }
+    }
+  }
+}
+```
+
+### 环境变量
 
 ```bash
-# NCBI API key (optional but recommended for higher rate limits)
+# NCBI API密钥（可选但推荐，以获得更高的请求限制）
 export NCBI_API_KEY="your_ncbi_api_key"
 
-# Email for NCBI API (required for some operations)
+# NCBI API邮箱（某些操作必需）
 export NCBI_EMAIL="your_email@example.com"
 ```
 
-### Project Configuration
+### 项目配置
 
-The project includes a comprehensive configuration file (`project_config.json`) that defines:
+项目包含一个综合配置文件（`project_config.json`），定义了：
 
-- Server settings and capabilities
-- Rate limiting and caching configuration
-- Logging and monitoring settings
-- Development and deployment options
+- 服务器设置和功能
+- 限流和缓存配置
+- 日志和监控设置
+- 开发和部署选项
 
-### Configuration File
+### 配置文件
 
-Create a configuration file at `~/.genome_mcp/config.json`:
+在 `~/.genome_mcp/config.json` 创建配置文件：
 
 ```json
 {
@@ -172,104 +298,104 @@ Create a configuration file at `~/.genome_mcp/config.json`:
 }
 ```
 
-## Development
+## 开发
 
-### Setup Development Environment
+### 设置开发环境
 
 ```bash
-# Clone the repository
+# 克隆仓库
 git clone https://github.com/gqy20/genome-mcp.git
 cd genome-mcp
 
-# Install with uv
+# 使用uv安装
 uv sync --dev
 
-# Install pre-commit hooks
+# 安装pre-commit钩子
 uv run pre-commit install
 ```
 
-### Running Tests
+### 运行测试
 
 ```bash
-# Run all tests
+# 运行所有测试
 uv run pytest
 
-# Run with coverage
+# 运行覆盖率测试
 uv run pytest --cov=src --cov-report=html
 
-# Run specific test file
+# 运行特定测试文件
 uv run pytest tests/test_ncbi_gene_server.py
 ```
 
-### Code Quality
+### 代码质量
 
 ```bash
-# Format code
+# 格式化代码
 uv run black src/ tests/
 
-# Sort imports
+# 排序导入
 uv run isort src/ tests/
 
-# Type checking
+# 类型检查
 uv run mypy src/
 
-# Linting
+# 代码检查
 uv run ruff check src/ tests/
 ```
 
-## Project Structure
+## 项目结构
 
 ```
 genome-mcp/
-  main.py                  # FastMCP server entry point
-  src/                     # Source code
-    servers/               # MCP server implementations
-      base.py            # Base MCP server class
-      ncbi/              # NCBI server implementations
-        gene.py         # NCBI Gene server
-    configuration.py       # Configuration management
-    http_utils/            # HTTP utilities
-    data/                  # Data processing
-    core/                  # Core utilities
-    exceptions.py          # Exception definitions
-  tests/                   # Test code
-  docs/                    # Documentation
-  examples/               # Example code
-  .github/                # GitHub Actions workflows
-  project_config.json      # Project configuration
+  main.py                  # FastMCP服务器入口点
+  src/                     # 源代码
+    servers/               # MCP服务器实现
+      base.py            # 基础MCP服务器类
+      ncbi/              # NCBI服务器实现
+        gene.py         # NCBI Gene服务器
+    configuration.py       # 配置管理
+    http_utils/            # HTTP工具
+    data/                  # 数据处理
+    core/                  # 核心工具
+    exceptions.py          # 异常定义
+  tests/                   # 测试代码
+  docs/                    # 文档
+  examples/               # 示例代码
+  .github/                # GitHub Actions工作流
+  project_config.json      # 项目配置
 ```
 
-## Architecture
+## 架构
 
-### FastMCP Server Architecture
+### FastMCP服务器架构
 
-- **FastMCP Framework**: Built on the FastMCP framework for MCP protocol implementation
-- **NCBIGeneServer**: Implementation for NCBI Gene database access
-- **MCP Tools**: Expose genomic data functions as MCP tools
-- **Async Design**: Full async/await support for high performance
-- **Rate Limiting**: Built-in request rate limiting with Token Bucket algorithm
-- **Caching**: Optional response caching to improve performance
-- **Error Handling**: Comprehensive error handling and logging
+- **FastMCP框架**：基于FastMCP框架实现MCP协议
+- **NCBIGeneServer**：NCBI Gene数据库访问实现
+- **MCP工具**：将基因组数据函数暴露为MCP工具
+- **异步设计**：完全的async/await支持以获得高性能
+- **限流**：使用令牌桶算法的内置请求限流
+- **缓存**：可选的响应缓存以提高性能
+- **错误处理**：全面的错误处理和日志记录
 
-### Key Components
+### 核心组件
 
-- **main.py**: FastMCP server entry point with tool decorators
-- **NCBIGeneServer**: NCBI Gene database access implementation
-- **MCP Transport**: Support for stdio, SSE, and Streamable HTTP transports
-- **Request Execution**: Support for single and batch requests
-- **Configuration Management**: JSON-based configuration system
+- **main.py**：带有工具装饰器的FastMCP服务器入口点
+- **NCBIGeneServer**：NCBI Gene数据库访问实现
+- **MCP传输**：支持stdio、SSE和Streamable HTTP传输
+- **请求执行**：支持单个和批量请求
+- **配置管理**：基于JSON的配置系统
 
-## Contributing
+## 贡献
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+我们欢迎贡献！详情请参阅 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
-## License
+## 许可证
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+本项目采用MIT许可证 - 详情请参阅 [LICENSE](LICENSE) 文件。
 
-## Citation
+## 引用
 
-If you use Genome MCP in your research, please cite:
+如果您在研究中使用Genome MCP，请引用：
 
 ```bibtex
 @software{genome_mcp,
@@ -280,15 +406,15 @@ If you use Genome MCP in your research, please cite:
 }
 ```
 
-## Support
+## 支持
 
-- **Documentation**: [https://github.com/gqy20/genome-mcp#readme](https://github.com/gqy20/genome-mcp#readme)
-- **Issues**: [https://github.com/gqy20/genome-mcp/issues](https://github.com/gqy20/genome-mcp/issues)
-- **Discussions**: [https://github.com/gqy20/genome-mcp/discussions](https://github.com/gqy20/genome-mcp/discussions)
+- **文档**：[https://github.com/gqy20/genome-mcp#readme](https://github.com/gqy20/genome-mcp#readme)
+- **问题**：[https://github.com/gqy20/genome-mcp/issues](https://github.com/gqy20/genome-mcp/issues)
+- **讨论**：[https://github.com/gqy20/genome-mcp/discussions](https://github.com/gqy20/genome-mcp/discussions)
 
-## Acknowledgments
+## 致谢
 
-- [NCBI](https://www.ncbi.nlm.nih.gov/) for providing comprehensive genomic databases
-- [Model Context Protocol](https://modelcontextprotocol.io/) for enabling AI-tool integration
-- [FastMCP](https://github.com/gofastmcp/fastmcp) for the MCP framework implementation
-- [uv](https://github.com/astral-sh/uv) for modern Python package management
+- [NCBI](https://www.ncbi.nlm.nih.gov/) 提供全面的基因组数据库
+- [Model Context Protocol](https://modelcontextprotocol.io/) 实现AI工具集成
+- [FastMCP](https://github.com/gofastmcp/fastmcp) 提供MCP框架实现
+- [uv](https://github.com/astral-sh/uv) 提供现代Python包管理

@@ -2,12 +2,30 @@
   "mcpServers": {
     "genome-mcp": {
       "command": "uvx",
-      "args": ["genome-mcp", "server", "--server-name", "ncbi-gene"],
+      "args": ["genome-mcp"],
       "env": {
         "NCBI_API_KEY": "${NCBI_API_KEY}",
         "NCBI_EMAIL": "${NCBI_EMAIL}"
       },
       "description": "Genomic data MCP server for NCBI Gene database access"
+    },
+    "genome-mcp-sse": {
+      "command": "uvx",
+      "args": ["genome-mcp", "--transport", "sse", "--host", "localhost", "--port", "8080"],
+      "env": {
+        "NCBI_API_KEY": "${NCBI_API_KEY}",
+        "NCBI_EMAIL": "${NCBI_EMAIL}"
+      },
+      "description": "Genomic data MCP server with SSE transport (http://localhost:8080/sse)"
+    },
+    "genome-mcp-http": {
+      "command": "uvx",
+      "args": ["genome-mcp", "--transport", "streamable-http", "--host", "localhost", "--port", "8080"],
+      "env": {
+        "NCBI_API_KEY": "${NCBI_API_KEY}",
+        "NCBI_EMAIL": "${NCBI_EMAIL}"
+      },
+      "description": "Genomic data MCP server with HTTP transport (http://localhost:8080/mcp)"
     }
   }
 }

@@ -12,9 +12,6 @@ import os
 import sys
 from typing import Dict, Any, Optional, List
 
-# Add src to Python path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
-
 from fastmcp import FastMCP
 from genome_mcp.configuration import get_config
 from genome_mcp.servers.ncbi.gene import NCBIGeneServer
@@ -24,7 +21,7 @@ from genome_mcp.exceptions import GenomeMCPError
 # Create FastMCP server instance
 mcp = FastMCP(
     name="Genome MCP Server",
-    version="0.1.1",
+    version="0.1.4",
     instructions="Genomic data MCP server for NCBI Gene database access"
 )
 
