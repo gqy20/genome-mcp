@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Union
 from genome_mcp.exceptions import ValidationError
 
 
-def generate_cache_key(prefix: str, *args, **kwargs) -> str:
+def generate_cache_key(prefix: str, *args: Any, **kwargs: Any) -> str:
     """
     Generate consistent cache key from arguments.
 
@@ -78,11 +78,12 @@ def format_file_size(size_bytes: int) -> str:
 
     size_names = ["B", "KB", "MB", "GB", "TB"]
     i = 0
-    while size_bytes >= 1024 and i < len(size_names) - 1:
-        size_bytes /= 1024.0
+    current_size = float(size_bytes)
+    while current_size >= 1024 and i < len(size_names) - 1:
+        current_size /= 1024.0
         i += 1
 
-    return f"{size_bytes:.1f}{size_names[i]}"
+    return f"{current_size:.1f}{size_names[i]}"
 
 
 def get_timestamp() -> str:
@@ -304,14 +305,14 @@ def calculate_similarity(text1: str, text2: str) -> float:
         return 0.0
 
     # Simple Levenshtein distance implementation
-    def levenshtein_distance(s1, s2):
+    def levenshtein_distance(s1: str, s2: str) -> int:
         if len(s1) < len(s2):
             return levenshtein_distance(s2, s1)
 
         if len(s2) == 0:
             return len(s1)
 
-        previous_row = range(len(s2) + 1)
+        previous_row = list(range(len(s2) + 1))
         for i, c1 in enumerate(s1):
             current_row = [i + 1]
             for j, c2 in enumerate(s2):

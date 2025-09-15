@@ -11,10 +11,7 @@ from typing import Any, Dict, List
 
 import structlog
 
-from genome_mcp.exceptions import (
-    DataFormatError,
-    ValidationError,
-)
+from genome_mcp.exceptions import DataFormatError, ValidationError
 
 logger = structlog.get_logger(__name__)
 
@@ -27,8 +24,12 @@ class GenomicDataParser:
         r"^(chr)?([1-9]|1[0-9]|2[0-2]|X|Y|MT?)$", re.IGNORECASE
     )
     GENOMIC_POSITION_PATTERN = re.compile(r"^(\d+):(\d+)-(\d+)$")
-    GENOMIC_POSITION_PATTERN_WITH_CHR = re.compile(r"^(chr)?([1-9]|1[0-9]|2[0-2]|X|Y|MT?):(\d+)-(\d+)$", re.IGNORECASE)
-    GENOMIC_POSITION_BRACKET_PATTERN = re.compile(r"^(chr)?([1-9]|1[0-9]|2[0-2]|X|Y|MT?)\[(\d+)-(\d+)\]$", re.IGNORECASE)
+    GENOMIC_POSITION_PATTERN_WITH_CHR = re.compile(
+        r"^(chr)?([1-9]|1[0-9]|2[0-2]|X|Y|MT?):(\d+)-(\d+)$", re.IGNORECASE
+    )
+    GENOMIC_POSITION_BRACKET_PATTERN = re.compile(
+        r"^(chr)?([1-9]|1[0-9]|2[0-2]|X|Y|MT?)\[(\d+)-(\d+)\]$", re.IGNORECASE
+    )
     RSID_PATTERN = re.compile(r"^rs\d+$")
     ENSEMBL_GENE_PATTERN = re.compile(r"^ENSG\d{11}$")
     ENSEMBL_TRANSCRIPT_PATTERN = re.compile(r"^ENST\d{11}$")
@@ -59,7 +60,11 @@ class GenomicDataParser:
                 if not match:
                     raise ValueError(f"Invalid genomic position format: {position_str}")
 
-                chromosome = match.group(1) + match.group(2) if match.group(1) else match.group(2)
+                chromosome = (
+                    match.group(1) + match.group(2)
+                    if match.group(1)
+                    else match.group(2)
+                )
                 start = int(match.group(3))
                 end = int(match.group(4))
 
@@ -69,7 +74,11 @@ class GenomicDataParser:
                 if not match:
                     raise ValueError(f"Invalid genomic position format: {position_str}")
 
-                chromosome = match.group(1) + match.group(2) if match.group(1) else match.group(2)
+                chromosome = (
+                    match.group(1) + match.group(2)
+                    if match.group(1)
+                    else match.group(2)
+                )
                 start = int(match.group(3))
                 end = int(match.group(4))
 

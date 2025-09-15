@@ -10,7 +10,7 @@ import json
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import structlog
 
@@ -19,7 +19,7 @@ from ..exceptions import ValidationError
 logger = structlog.get_logger(__name__)
 
 
-def generate_cache_key(prefix: str, *args, **kwargs) -> str:
+def generate_cache_key(prefix: str, *args: Any, **kwargs: Any) -> str:
     """
     Generate consistent cache key from arguments.
 
@@ -83,11 +83,12 @@ def format_file_size(size_bytes: int) -> str:
 
     size_names = ["B", "KB", "MB", "GB", "TB"]
     i = 0
-    while size_bytes >= 1024 and i < len(size_names) - 1:
-        size_bytes /= 1024.0
+    current_size = float(size_bytes)
+    while current_size >= 1024 and i < len(size_names) - 1:
+        current_size /= 1024.0
         i += 1
 
-    return f"{size_bytes:.1f}{size_names[i]}"
+    return f"{current_size:.1f}{size_names[i]}"
 
 
 def get_timestamp() -> str:
@@ -207,7 +208,7 @@ def retry_async(
     retry_delay: float = 1.0,
     backoff_factor: float = 2.0,
     exceptions: tuple = (Exception,),
-):
+) -> Callable:
     """
     Decorator for retrying async functions.
 
@@ -221,8 +222,8 @@ def retry_async(
         Decorator function
     """
 
-    def decorator(func):
-        async def wrapper(*args, **kwargs):
+    def decorator(func: Callable) -> Callable:
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
             last_exception = None
 
             for attempt in range(max_retries + 1):
@@ -364,14 +365,14 @@ def calculate_similarity(text1: str, text2: str) -> float:
         return 0.0
 
     # Simple Levenshtein distance implementation
-    def levenshtein_distance(s1, s2):
+    def levenshtein_distance(s1: str, s2: str) -> int:
         if len(s1) < len(s2):
             return levenshtein_distance(s2, s1)
 
         if len(s2) == 0:
             return len(s1)
 
-        previous_row = range(len(s2) + 1)
+        previous_row = list(range(len(s2) + 1))
         for i, c1 in enumerate(s1):
             current_row = [i + 1]
             for j, c2 in enumerate(s2):
@@ -389,7 +390,7 @@ def calculate_similarity(text1: str, text2: str) -> float:
     return 1.0 - (distance / max_length) if max_length > 0 else 1.0
 
 
-def async_timeout(timeout_seconds: float):
+def async_timeout(timeout_seconds: float) -> Callable:
     """
     Decorator to add timeout to async function.
 
@@ -400,8 +401,8 @@ def async_timeout(timeout_seconds: float):
         Decorated function
     """
 
-    def decorator(func):
-        async def wrapper(*args, **kwargs):
+    def decorator(func: Callable) -> Callable:
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
             try:
                 return await asyncio.wait_for(
                     func(*args, **kwargs), timeout=timeout_seconds
@@ -442,7 +443,7 @@ def memory_usage() -> Dict[str, float]:
         return {"rss": 0.0, "vms": 0.0, "percent": 0.0}
 
 
-def log_execution_time(func_name: str = None):
+def log_execution_time(func_name: Optional[str] = None) -> Callable:
     """
     Decorator to log function execution time.
 
@@ -453,8 +454,8 @@ def log_execution_time(func_name: str = None):
         Decorated function
     """
 
-    def decorator(func):
-        async def async_wrapper(*args, **kwargs):
+    def decorator(func: Callable) -> Callable:
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
             start_time = time.time()
             try:
                 result = await func(*args, **kwargs)
@@ -475,7 +476,7 @@ def log_execution_time(func_name: str = None):
                 )
                 raise
 
-        def sync_wrapper(*args, **kwargs):
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
             start_time = time.time()
             try:
                 result = func(*args, **kwargs)

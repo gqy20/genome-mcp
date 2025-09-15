@@ -234,7 +234,7 @@ class CLITester:
         if result["success"]:
             data = json.loads(result["json_output"])
             assert data["operation"] == "batch_gene_info"
-            assert data["batch"] == True
+            assert data["batch"]
             assert data["result"]["total_genes"] == 3
 
         # Test batch with pretty format

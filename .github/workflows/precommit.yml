@@ -1,0 +1,46 @@
+name: Pre-commit Check
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  pre-commit:
+    name: Run Pre-commit Hooks
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-precommit-${{ hashFiles('**/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-precommit-
+          ${{ runner.os }}-pip-
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v2
+      with:
+        version: "latest"
+
+    - name: Install dependencies
+      run: |
+        uv sync --dev
+
+    - name: Install pre-commit
+      run: |
+        uv run pip install pre-commit
+
+    - name: Run pre-commit
+      run: |
+        uv run pre-commit run --all-files --show-diff-on-failure

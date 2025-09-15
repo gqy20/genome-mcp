@@ -11,11 +11,7 @@ from urllib.parse import urlencode
 import structlog
 
 from genome_mcp.data.parsers import GenomicDataParser
-from genome_mcp.exceptions import (
-    APIError,
-    DataNotFoundError,
-    ValidationError,
-)
+from genome_mcp.exceptions import APIError, DataNotFoundError, ValidationError
 from genome_mcp.servers.base import BaseMCPServer, ServerCapabilities
 
 logger = structlog.get_logger(__name__)
@@ -420,9 +416,7 @@ class NCBIGeneServer(BaseMCPServer):
             raise ValidationError(f"Invalid genomic position: {str(e)}")
 
         # Build search term for genomic region
-        search_term = (
-            f"{chromosome}:{start}-{end}[chr] AND {species}[Organism]"
-        )
+        search_term = f"{chromosome}:{start}-{end}[chr] AND {species}[Organism]"
 
         return await self._search_genes(
             {
@@ -496,7 +490,7 @@ class NCBIGeneServer(BaseMCPServer):
         if not gene_uids:
             raise DataNotFoundError(f"Gene not found: {gene_id} in {species}")
 
-        return gene_uids[0]
+        return str(gene_uids[0])
 
     async def _get_gene_text_summary(self, gene_uid: str) -> str:
         """Get gene summary text from Gene database."""
@@ -513,13 +507,18 @@ class NCBIGeneServer(BaseMCPServer):
         fetch_url = f"{base_url}efetch.fcgi?{urlencode(fetch_params)}"
 
         try:
+            if self.http_client.session is None:
+                await self.http_client.start_session()
+            assert self.http_client.session is not None, "Session should be initialized"
             response = await self.http_client.session.get(fetch_url)
             return await response.text()
         except Exception:
             # Fallback to basic summary
             return f"Gene summary for UID: {gene_uid}"
 
-    async def _search_by_region_enhanced(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def _search_by_region_enhanced(
+        self, params: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Enhanced search for genes in a genomic region with format support.
 
         Args:
@@ -540,20 +539,26 @@ class NCBIGeneServer(BaseMCPServer):
         try:
             parsed_region = GenomicDataParser.parse_genomic_position(region)
         except ValidationError as e:
-            raise ValidationError(f"Invalid region format: {str(e)}", field_name="region")
+            raise ValidationError(
+                f"Invalid region format: {str(e)}", field_name="region"
+            )
 
         # Validate that we have a complete region
         if parsed_region["start"] is None or parsed_region["end"] is None:
-            raise ValidationError("Region must include start and end positions", field_name="region")
+            raise ValidationError(
+                "Region must include start and end positions", field_name="region"
+            )
 
         # Call the existing search_by_region method with parsed parameters
-        return await self._search_by_region({
-            "chromosome": parsed_region["chromosome"],
-            "start": parsed_region["start"],
-            "end": parsed_region["end"],
-            "species": species,
-            "max_results": max_results,
-        })
+        return await self._search_by_region(
+            {
+                "chromosome": parsed_region["chromosome"],
+                "start": parsed_region["start"],
+                "end": parsed_region["end"],
+                "species": species,
+                "max_results": max_results,
+            }
+        )
 
     async def _batch_gene_homologs(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Get homologs for multiple genes in batch.
@@ -583,24 +588,26 @@ class NCBIGeneServer(BaseMCPServer):
 
         # Process in batches to avoid overwhelming the API
         all_results = {}
-        
+
         for i in range(0, len(gene_ids), max_batch_size):
-            batch_gene_ids = gene_ids[i:i + max_batch_size]
-            
+            batch_gene_ids = gene_ids[i : i + max_batch_size]
+
             # Create tasks for concurrent execution
             tasks = []
             for gene_id in batch_gene_ids:
-                task = self._get_gene_homologs({
-                    "gene_id": gene_id,
-                    "species": source_species,
-                    "target_species": target_species,
-                })
+                task = self._get_gene_homologs(
+                    {
+                        "gene_id": gene_id,
+                        "species": source_species,
+                        "target_species": target_species,
+                    }
+                )
                 tasks.append(task)
-            
+
             try:
                 # Execute batch concurrently
                 batch_results = await asyncio.gather(*tasks, return_exceptions=True)
-                
+
                 # Process results
                 for gene_id, result in zip(batch_gene_ids, batch_results):
                     if isinstance(result, Exception):
@@ -613,13 +620,23 @@ class NCBIGeneServer(BaseMCPServer):
                             "homologs": [],
                         }
                     else:
-                        all_results[gene_id] = {
-                            "success": True,
-                            "gene_id": gene_id,
-                            "species": source_species,
-                            "homologs": result.get("homologs", []),
-                        }
-                        
+                        if isinstance(result, dict):
+                            all_results[gene_id] = {
+                                "success": True,
+                                "gene_id": gene_id,
+                                "species": source_species,
+                                "homologs": result.get("homologs", []),
+                            }
+                        else:
+                            all_results[gene_id] = {
+                                "success": False,
+                                "error": f"Unexpected result type: {type(result)}",
+                                "error_type": "TypeError",
+                                "gene_id": gene_id,
+                                "species": source_species,
+                                "homologs": [],
+                            }
+
             except Exception as e:
                 # If batch fails completely, record error for all genes in batch
                 for gene_id in batch_gene_ids:

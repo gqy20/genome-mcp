@@ -11,7 +11,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from genome_mcp.data.validators import GenomicValidator, QueryValidator, APIValidator
+from genome_mcp.data.validators import APIValidator, GenomicValidator, QueryValidator
 from genome_mcp.exceptions import ValidationError
 
 

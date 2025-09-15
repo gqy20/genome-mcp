@@ -5,7 +5,7 @@ This module contains type definitions for gene-related data structures.
 """
 
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -24,7 +24,7 @@ class GeneQuery(BaseModel):
 
     @field_validator("gene_symbol")
     @classmethod
-    def validate_gene_symbol(cls, v):
+    def validate_gene_symbol(cls, v: str) -> str:
         """Validate gene symbol."""
         if not v or not v.strip():
             raise ValueError("Gene symbol cannot be empty")
@@ -32,7 +32,7 @@ class GeneQuery(BaseModel):
 
     @field_validator("species")
     @classmethod
-    def validate_species(cls, v):
+    def validate_species(cls, v: str) -> str:
         """Validate species name."""
         if not v or not v.strip():
             raise ValueError("Species name cannot be empty")
@@ -52,7 +52,7 @@ class GeneLocation(BaseModel):
 
     @field_validator("strand")
     @classmethod
-    def validate_strand(cls, v):
+    def validate_strand(cls, v: str) -> str:
         """Validate strand."""
         if v not in ["+", "-"]:
             raise ValueError("Strand must be '+' or '-'")
@@ -60,7 +60,7 @@ class GeneLocation(BaseModel):
 
     @field_validator("end")
     @classmethod
-    def validate_positions(cls, v, info):
+    def validate_positions(cls, v: int, info: Any) -> int:
         """Validate start and end positions."""
         data = info.data
         start = data.get("start")
@@ -134,7 +134,7 @@ class BatchGeneQuery(BaseModel):
 
     @field_validator("gene_symbols")
     @classmethod
-    def validate_gene_symbols(cls, v):
+    def validate_gene_symbols(cls, v: List[str]) -> List[str]:
         """Validate gene symbols list."""
         if not v:
             raise ValueError("Gene symbols list cannot be empty")

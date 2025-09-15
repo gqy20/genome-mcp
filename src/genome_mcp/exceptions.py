@@ -49,7 +49,12 @@ class GenomeMCPError(Exception):
 class ConfigurationError(GenomeMCPError):
     """Exception raised for configuration-related errors."""
 
-    def __init__(self, message: str, config_key: Optional[str] = None, **kwargs):
+    def __init__(
+        self,
+        message: str,
+        config_key: Optional[str] = None,
+        **kwargs: Any,
+    ):
         """
         Initialize configuration error.
 
@@ -72,7 +77,7 @@ class ValidationError(GenomeMCPError):
         message: str,
         field_name: Optional[str] = None,
         field_value: Any = None,
-        **kwargs,
+        **kwargs: Any,
     ):
         """
         Initialize validation error.
@@ -101,7 +106,7 @@ class DataNotFoundError(GenomeMCPError):
         message: str,
         data_source: Optional[str] = None,
         query_params: Optional[Dict[str, Any]] = None,
-        **kwargs,
+        **kwargs: Any,
     ):
         """
         Initialize data not found error.
@@ -130,7 +135,7 @@ class DataFormatError(GenomeMCPError):
         message: str,
         expected_format: Optional[str] = None,
         actual_format: Optional[str] = None,
-        **kwargs,
+        **kwargs: Any,
     ):
         """
         Initialize data format error.
@@ -161,7 +166,7 @@ class APIError(GenomeMCPError):
         url: Optional[str] = None,
         response_data: Optional[Dict[str, Any]] = None,
         error_code: Optional[str] = None,
-        **kwargs,
+        **kwargs: Any,
     ):
         """
         Initialize API error.
@@ -198,7 +203,7 @@ class RateLimitError(APIError):
         message: str,
         retry_after: Optional[int] = None,
         rate_limit_type: Optional[str] = None,
-        **kwargs,
+        **kwargs: Any,
     ):
         """
         Initialize rate limit error.
@@ -222,7 +227,7 @@ class RateLimitError(APIError):
 class AuthenticationError(APIError):
     """Exception raised for authentication/authorization errors."""
 
-    def __init__(self, message: str, auth_type: Optional[str] = None, **kwargs):
+    def __init__(self, message: str, auth_type: Optional[str] = None, **kwargs: Any):
         """
         Initialize authentication error.
 
@@ -246,7 +251,7 @@ class NetworkError(GenomeMCPError):
         message: str,
         host: Optional[str] = None,
         port: Optional[int] = None,
-        **kwargs,
+        **kwargs: Any,
     ):
         """
         Initialize network error.
@@ -275,7 +280,7 @@ class CacheError(GenomeMCPError):
         message: str,
         cache_key: Optional[str] = None,
         operation: Optional[str] = None,
-        **kwargs,
+        **kwargs: Any,
     ):
         """
         Initialize cache error.
@@ -304,7 +309,7 @@ class TimeoutError(GenomeMCPError):
         message: str,
         timeout_duration: Optional[float] = None,
         operation: Optional[str] = None,
-        **kwargs,
+        **kwargs: Any,
     ):
         """
         Initialize timeout error.
@@ -333,7 +338,7 @@ class ResourceError(GenomeMCPError):
         message: str,
         resource_type: Optional[str] = None,
         resource_id: Optional[str] = None,
-        **kwargs,
+        **kwargs: Any,
     ):
         """
         Initialize resource error.
@@ -363,7 +368,7 @@ class BatchProcessingError(GenomeMCPError):
         batch_size: Optional[int] = None,
         failed_items: Optional[List[Dict[str, Any]]] = None,
         successful_items: Optional[int] = None,
-        **kwargs,
+        **kwargs: Any,
     ):
         """
         Initialize batch processing error.
@@ -396,7 +401,7 @@ class QuerySyntaxError(GenomeMCPError):
         message: str,
         query: Optional[str] = None,
         syntax_position: Optional[int] = None,
-        **kwargs,
+        **kwargs: Any,
     ):
         """
         Initialize query syntax error.
@@ -425,7 +430,7 @@ class ServerError(GenomeMCPError):
         message: str,
         server_name: Optional[str] = None,
         operation: Optional[str] = None,
-        **kwargs,
+        **kwargs: Any,
     ):
         """
         Initialize server error.
@@ -454,7 +459,7 @@ class DatabaseError(GenomeMCPError):
         message: str,
         database_name: Optional[str] = None,
         table_name: Optional[str] = None,
-        **kwargs,
+        **kwargs: Any,
     ):
         """
         Initialize database error.

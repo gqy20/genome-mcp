@@ -51,11 +51,7 @@ def test_exception_handling():
     """测试异常处理"""
     print("🚨 测试异常处理...")
 
-    from exceptions import (
-        APIError,
-        ValidationError,
-        create_error_from_exception,
-    )
+    from exceptions import APIError, ValidationError, create_error_from_exception
 
     # 测试基本异常
     try:

@@ -454,8 +454,5 @@ class TestDatabaseError:
         assert error.details["table_name"] == "genes"
 
 
-
-
-
 if __name__ == "__main__":
     pytest.main([__file__])

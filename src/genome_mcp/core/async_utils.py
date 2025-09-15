@@ -5,6 +5,7 @@ This module provides async decorators and utility functions.
 """
 
 import asyncio
+from typing import Any, Callable, Optional
 
 from genome_mcp.exceptions import TimeoutError
 
@@ -14,7 +15,7 @@ def retry_async(
     retry_delay: float = 1.0,
     backoff_factor: float = 2.0,
     exceptions: tuple = (Exception,),
-):
+) -> Callable:
     """
     Decorator for retrying async functions.
 
@@ -28,8 +29,8 @@ def retry_async(
         Decorator function
     """
 
-    def decorator(func):
-        async def wrapper(*args, **kwargs):
+    def decorator(func: Callable) -> Callable:
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
             last_exception = None
 
             for attempt in range(max_retries + 1):
@@ -55,7 +56,7 @@ def retry_async(
     return decorator
 
 
-def async_timeout(timeout_seconds: float):
+def async_timeout(timeout_seconds: float) -> Callable:
     """
     Decorator to add timeout to async function.
 
@@ -66,8 +67,8 @@ def async_timeout(timeout_seconds: float):
         Decorated function
     """
 
-    def decorator(func):
-        async def wrapper(*args, **kwargs):
+    def decorator(func: Callable) -> Callable:
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
             try:
                 return await asyncio.wait_for(
                     func(*args, **kwargs), timeout=timeout_seconds
@@ -84,7 +85,7 @@ def async_timeout(timeout_seconds: float):
     return decorator
 
 
-def log_execution_time(func_name: str = None):
+def log_execution_time(func_name: Optional[str] = None) -> Callable:
     """
     Decorator to log function execution time.
 
@@ -95,15 +96,15 @@ def log_execution_time(func_name: str = None):
         Decorated function
     """
 
-    def decorator(func):
-        async def async_wrapper(*args, **kwargs):
+    def decorator(func: Callable) -> Callable:
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
             try:
                 result = await func(*args, **kwargs)
                 return result
             except Exception:
                 raise
 
-        def sync_wrapper(*args, **kwargs):
+        def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
             try:
                 result = func(*args, **kwargs)
                 return result

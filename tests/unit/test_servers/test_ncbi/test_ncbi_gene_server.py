@@ -27,11 +27,11 @@ async def test_ncbi_gene_server():
 
     # Test server start/stop
     await server.start()
-    assert server._running == True
+    assert server._running
     print("✓ 服务器启动成功")
 
     await server.stop()
-    assert server._running == False
+    assert not server._running
     print("✓ 服务器停止成功")
 
     # Test health check
@@ -257,8 +257,8 @@ async def test_server_capabilities():
     caps = server.capabilities
     assert caps.name == "NCBIGeneServer"
     assert caps.version == "1.0.0"
-    assert caps.supports_batch == True
-    assert caps.supports_streaming == False
+    assert caps.supports_batch
+    assert not caps.supports_streaming
     assert caps.max_batch_size > 0
     assert caps.rate_limit_requests > 0
 

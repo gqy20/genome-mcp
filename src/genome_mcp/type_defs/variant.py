@@ -5,7 +5,7 @@ This module contains type definitions for variant-related data structures.
 """
 
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -24,7 +24,7 @@ class VariantQuery(BaseModel):
 
     @field_validator("variant_id")
     @classmethod
-    def validate_variant_id(cls, v):
+    def validate_variant_id(cls, v: str) -> str:
         """Validate variant ID."""
         if not v or not v.strip():
             raise ValueError("Variant ID cannot be empty")
@@ -32,7 +32,7 @@ class VariantQuery(BaseModel):
 
     @field_validator("assembly")
     @classmethod
-    def validate_assembly(cls, v):
+    def validate_assembly(cls, v: str) -> str:
         """Validate genome assembly."""
         valid_assemblies = ["GRCh37", "GRCh38", "hg19", "hg38"]
         if v not in valid_assemblies:
@@ -53,7 +53,7 @@ class GenomicPosition(BaseModel):
 
     @field_validator("ref_allele")
     @classmethod
-    def validate_ref_allele(cls, v):
+    def validate_ref_allele(cls, v: str) -> str:
         """Validate reference allele."""
         if not v or not v.strip():
             raise ValueError("Allele cannot be empty")
@@ -61,7 +61,7 @@ class GenomicPosition(BaseModel):
 
     @field_validator("alt_allele")
     @classmethod
-    def validate_alt_allele(cls, v):
+    def validate_alt_allele(cls, v: str) -> str:
         """Validate alternate allele."""
         if not v or not v.strip():
             raise ValueError("Allele cannot be empty")
@@ -181,9 +181,9 @@ class RegionVariantQuery(BaseModel):
 
     @field_validator("end")
     @classmethod
-    def validate_positions(cls, v, values):
+    def validate_positions(cls, v: int, info: Any) -> int:
         """Validate start and end positions."""
-        start = values.get("start")
+        start = info.data.get("start")
         if start is not None:
             if v < start:
                 raise ValueError(

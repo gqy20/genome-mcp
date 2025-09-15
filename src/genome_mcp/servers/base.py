@@ -65,7 +65,7 @@ class ServerStats:
     bytes_sent: int = 0
     bytes_received: int = 0
 
-    def update_response_time(self, response_time: float):
+    def update_response_time(self, response_time: float) -> None:
         """Update average response time."""
         if self.requests_total == 0:
             self.avg_response_time = response_time
@@ -78,7 +78,7 @@ class ServerStats:
 
     def increment_success(
         self, response_time: float, bytes_sent: int = 0, bytes_received: int = 0
-    ):
+    ) -> None:
         """Increment success counter."""
         self.requests_total += 1
         self.requests_success += 1
@@ -86,7 +86,7 @@ class ServerStats:
         self.bytes_sent += bytes_sent
         self.bytes_received += bytes_received
 
-    def increment_failure(self):
+    def increment_failure(self) -> None:
         """Increment failure counter."""
         self.requests_total += 1
         self.requests_failed += 1
@@ -155,7 +155,7 @@ class BaseMCPServer(ABC):
         """Get base URL for the service. Must be implemented by subclasses."""
         pass
 
-    async def start(self):
+    async def start(self) -> None:
         """Start the server."""
         if self._running:
             self.logger.warning("Server already running")
@@ -166,7 +166,7 @@ class BaseMCPServer(ABC):
 
         self.logger.info("Server started", capabilities=self.capabilities.__dict__)
 
-    async def stop(self):
+    async def stop(self) -> None:
         """Stop the server."""
         if not self._running:
             self.logger.warning("Server not running")
@@ -337,7 +337,7 @@ class BaseMCPServer(ABC):
         """Execute a specific operation. Must be implemented by subclasses."""
         pass
 
-    def _validate_request(self, operation: str, params: Dict[str, Any]):
+    def _validate_request(self, operation: str, params: Dict[str, Any]) -> None:
         """Validate request parameters."""
         if operation not in self.capabilities.operations:
             raise ValidationError(
@@ -353,11 +353,12 @@ class BaseMCPServer(ABC):
 
         cached = self._cache.get(cache_key)
         if cached and time.time() < cached.get("expires", 0):
-            return cached.get("data")
+            data = cached.get("data")
+            return data if data is not None else {}
 
         return None
 
-    def _set_cache(self, cache_key: str, data: Dict[str, Any]):
+    def _set_cache(self, cache_key: str, data: Dict[str, Any]) -> None:
         """Set result in cache."""
         if not self._cache:
             # Initialize cache
@@ -390,16 +391,16 @@ class BaseMCPServer(ABC):
             "capabilities": self.capabilities.__dict__,
         }
 
-    def reset_stats(self):
+    def reset_stats(self) -> None:
         """Reset server statistics."""
         self.stats = ServerStats()
         self.logger.info("Server statistics reset")
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "BaseMCPServer":
         """Async context manager entry."""
         await self.start()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Async context manager exit."""
         await self.stop()

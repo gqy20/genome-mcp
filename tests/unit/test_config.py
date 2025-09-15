@@ -415,7 +415,7 @@ class TestConfigManager:
     def test_get_value(self):
         """Test getting specific configuration values."""
         manager = ConfigManager()
-        config = manager.load_config()
+        manager.load_config()
 
         # Test existing values
         assert manager.get_value("app_name") == "genome-mcp"
@@ -429,7 +429,7 @@ class TestConfigManager:
     def test_set_value(self):
         """Test setting specific configuration values."""
         manager = ConfigManager()
-        config = manager.load_config()
+        manager.load_config()
 
         # Set a value
         manager.set_value("app_name", "modified-app")

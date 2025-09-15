@@ -7,7 +7,7 @@ and managing network operations with proper error handling and retry logic.
 
 import asyncio
 import time
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 from urllib.parse import urljoin, urlparse
 
 import aiohttp
@@ -19,7 +19,6 @@ from genome_mcp.exceptions import (
     NetworkError,
     RateLimitError,
     TimeoutError,
-    create_error_from_exception,
 )
 
 logger = structlog.get_logger(__name__)

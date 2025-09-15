@@ -463,7 +463,6 @@ class TestUtilityFunctions:
 
     def test_log_execution_time_async(self):
         """Test execution time logging for async functions."""
-        call_log = []
 
         @log_execution_time("test_func")
         async def test_func():

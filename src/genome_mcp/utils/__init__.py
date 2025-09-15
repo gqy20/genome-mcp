@@ -5,6 +5,20 @@ This package provides utility functions for HTTP operations, data parsing,
 validation, and other common tasks.
 """
 
+from ..data.parsers import BatchProcessor
+from ..data.parsers import DataValidator as ParserDataValidator
+from ..data.parsers import GenomicDataParser, JSONDataParser
+from ..data.validators import APIValidator
+from ..data.validators import DataValidator as GeneralDataValidator
+from ..data.validators import GenomicValidator, QueryValidator
+from ..http_utils import (
+    HTTPClient,
+    RateLimiter,
+    batch_requests,
+    fetch_with_retry,
+    sanitize_url,
+    validate_url,
+)
 from .core import (
     async_timeout,
     calculate_similarity,
@@ -25,18 +39,6 @@ from .core import (
     truncate_string,
     validate_required_fields,
 )
-from .http import (
-    HTTPClient,
-    RateLimiter,
-    batch_requests,
-    fetch_with_retry,
-    sanitize_url,
-    validate_url,
-)
-from .parsers import BatchProcessor, DataValidator, GenomicDataParser, JSONDataParser
-from .validators import APIValidator
-from .validators import DataValidator as GeneralDataValidator
-from .validators import GenomicValidator, QueryValidator
 
 __all__ = [
     # Core utilities
@@ -69,7 +71,7 @@ __all__ = [
     "GenomicDataParser",
     "JSONDataParser",
     "BatchProcessor",
-    "DataValidator",
+    "ParserDataValidator",
     # Validators
     "GenomicValidator",
     "QueryValidator",

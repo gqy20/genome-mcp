@@ -54,16 +54,16 @@ async def test_base_server():
 
     # Test server start/stop
     await server.start()
-    assert server._running == True
+    assert server._running
     print("✓ 服务器启动成功")
 
     await server.stop()
-    assert server._running == False
+    assert not server._running
     print("✓ 服务器停止成功")
 
     # Test async context manager
     async with TestServer(config) as server_ctx:
-        assert server_ctx._running == True
+        assert server_ctx._running
         print("✓ 异步上下文管理器工作正常")
 
     # Test health check
