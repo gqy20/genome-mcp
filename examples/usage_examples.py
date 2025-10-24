@@ -6,16 +6,15 @@ Genome MCP 使用示例
 """
 
 import asyncio
-import json
-from pathlib import Path
 import sys
+from pathlib import Path
 
 # 添加 src 到路径
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from genome_mcp.servers.ncbi.gene import NCBIGeneServer
 from genome_mcp.configuration import GenomeMCPConfig
-from genome_mcp.exceptions import GenomeMCPError, ValidationError, DataNotFoundError
+from genome_mcp.exceptions import DataNotFoundError, ValidationError
+from genome_mcp.servers.ncbi.gene import NCBIGeneServer
 
 
 async def basic_gene_info_example():
@@ -224,7 +223,7 @@ async def concurrent_operations_example():
 
             # 显示服务器统计信息
             stats = server.get_stats()
-            print(f"\n📊 服务器统计:")
+            print("\n📊 服务器统计:")
             print(f"   总请求数: {stats['stats']['requests_total']}")
             print(f"   成功请求: {stats['stats']['requests_success']}")
             print(f"   失败请求: {stats['stats']['requests_failed']}")
