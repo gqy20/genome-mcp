@@ -2,6 +2,98 @@
 
 ## [0.2.1] - 2024-10-24
 
+### 🏗️ 模块化架构重构 - 进化生物学功能增强
+
+**重大架构优化**：从单体1564行代码重构为7个模块化文件，每个文件控制在300行左右。
+
+### 📁 架构变更
+
+#### 新模块结构
+```
+src/genome_mcp/
+├── main.py (24行)              # 主入口点
+├── __init__.py (113行)         # 模块导出和兼容性
+└── core/
+    ├── __init__.py (27行)      # 核心模块初始化
+    ├── clients.py (407行)      # API客户端 (NCBI, UniProt, OrthoDB)
+    ├── query_parser.py (230行) # 智能查询解析器
+    ├── query_executor.py (313行) # 查询执行器
+    ├── evolution_tools.py (291行) # 进化分析工具
+    └── tools.py (352行)        # MCP工具接口
+```
+
+#### 模块职责划分
+- **clients.py**: 统一管理所有外部API客户端
+- **query_parser.py**: 智能识别查询意图，支持进化生物学关键词
+- **query_executor.py**: 协调各种客户端执行查询
+- **evolution_tools.py**: 专门的进化生物学分析工具
+- **tools.py**: MCP协议工具接口实现
+- **main.py**: 简洁的主入口点
+
+### 🧬 进化生物学功能
+
+#### 新增查询类型
+- `ortholog` - 同源基因查询
+- `evolution` - 进化分析查询
+
+#### 智能关键词识别
+- `homolog`, `ortholog`, `paralog` → 自动识别为同源基因查询
+- `conservation`, `phylogen`, `evolution` → 自动识别为进化分析
+- `comparative`, `species`, `conserved` → 跨物种比较查询
+
+#### 进化分析工具
+- `analyze_gene_evolution()` - 基因进化分析
+- `build_phylogenetic_profile()` - 系统发育图谱构建
+
+### 🔧 代码质量提升
+
+#### 模块化优势
+- **可维护性**: 每个模块职责单一，易于理解和修改
+- **可测试性**: 独立模块便于单元测试
+- **可扩展性**: 新功能可独立添加到相应模块
+- **代码复用**: 核心组件可在不同工具间复用
+
+#### 导入优化
+- 清晰的依赖关系
+- 避免循环导入
+- 保持向后兼容性
+
+### 📊 代码统计
+
+| 文件 | 行数 | 职责 |
+|------|------|------|
+| main.py | 24 | 主入口点 |
+| core/__init__.py | 27 | 核心模块初始化 |
+| core/query_parser.py | 230 | 智能查询解析 |
+| core/evolution_tools.py | 291 | 进化分析工具 |
+| core/query_executor.py | 313 | 查询执行调度 |
+| core/tools.py | 352 | MCP工具接口 |
+| core/clients.py | 407 | API客户端管理 |
+| **总计** | **1644** | **完整功能** |
+
+### 🔄 兼容性保证
+
+所有原有API保持不变：
+```python
+# 原有功能完全兼容
+from genome_mcp import get_gene_info, search_genes, batch_gene_info
+
+# 新增进化分析功能
+from genome_mcp import analyze_gene_evolution, build_phylogenetic_profile
+```
+
+### 🧪 质量验证
+
+- ✅ 模块导入正常
+- ✅ MCP服务器启动成功
+- ✅ 所有功能向后兼容
+- ✅ 新进化生物学功能正常
+- ✅ 代码结构清晰合理
+
+---
+
+## [0.2.0] - 2024-10-24
+
 ### 🧬 UniProt 集成 - 多组学数据查询扩展
 
 基于Linus Torvalds设计理念的重大架构优化，实现**简洁、实用、高效**的基因组数据访问。
