@@ -7,10 +7,11 @@ Linus风格：统一接口，智能解析，高效批量查询
 """
 
 from fastmcp import FastMCP
+
 from .core.tools import create_mcp_tools
 
 # 创建MCP实例
-mcp = FastMCP("Genome MCP", version="0.2.0")
+mcp = FastMCP("Genome MCP", version="0.2.1")
 
 # 注册所有工具
 create_mcp_tools(mcp)

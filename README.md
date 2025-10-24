@@ -184,6 +184,12 @@ print("Server response:", response)
    - 智能结果排序
    - 上下文感知搜索
 
+4. **kegg_pathway_enrichment_tool** - KEGG通路富集分析 🆕
+   - 基因列表在KEGG通路中的富集分析
+   - 超几何分布检验计算统计显著性
+   - FDR多重检验校正
+   - 支持人类、小鼠、大鼠等多种模式生物
+
 ### 使用示例
 
 ```python
@@ -215,6 +221,15 @@ async def main():
         max_results=20
     )
     print("Advanced results:", advanced_results)
+
+    # KEGG通路富集分析
+    kegg_results = await kegg_pathway_enrichment_tool(
+        gene_list=["7157", "672", "675"],  # TP53, BRCA1, BRCA2的Entrez ID
+        organism="hsa",
+        pvalue_threshold=0.05,
+        min_gene_count=2
+    )
+    print("KEGG enrichment results:", kegg_results)
 
 asyncio.run(main())
 ```
@@ -269,6 +284,34 @@ asyncio.run(main())
       "intent": "gene_search",
       "key_terms": ["tumor", "suppressor", "genes", "cancer"]
     }
+  }
+}
+```
+
+### kegg_pathway_enrichment_tool 响应示例
+
+```json
+{
+  "query_genes": ["7157", "672", "675"],
+  "organism": "hsa",
+  "total_pathways_found": 51,
+  "significant_pathways": 15,
+  "all_pathways": [
+    {
+      "pathway_id": "hsa01522",
+      "pathway_name": "Path: hsa01522",
+      "genes": ["7157"],
+      "gene_count": 1,
+      "pvalue": 0.0001,
+      "fdr": 0.0051,
+      "fold_enrichment": 6666.67
+    }
+  ],
+  "query_info": {
+    "analysis_date": "2025-10-24",
+    "method": "KEGG Pathway Enrichment",
+    "statistical_test": "Hypergeometric Test",
+    "fdr_correction": "Benjamini-Hochberg"
   }
 }
 ```

@@ -10,10 +10,9 @@ from typing import Any
 
 from fastmcp import FastMCP
 
+from .evolution_tools import analyze_gene_evolution, build_phylogenetic_profile
 from .query_executor import QueryExecutor
 from .query_parser import QueryParser
-from .evolution_tools import analyze_gene_evolution, build_phylogenetic_profile
-
 
 # 全局查询执行器实例
 _query_executor = QueryExecutor()
@@ -154,7 +153,7 @@ def create_mcp_tools(mcp: FastMCP) -> None:
                 "rat": "10116",
                 "zebrafish": "7955",
                 "fruitfly": "7227",
-                "worm": "6239"
+                "worm": "6239",
             }
             if "organism" not in parsed.params:
                 organism_code = organism_mapping.get(species.lower(), "9606")
@@ -284,7 +283,7 @@ def create_mcp_tools(mcp: FastMCP) -> None:
                 query=query,
                 query_type=query_type,
                 max_results=max_results,
-                format="detailed"
+                format="detailed",
             )
 
             # 添加智能解析信息
@@ -292,7 +291,7 @@ def create_mcp_tools(mcp: FastMCP) -> None:
                 "description": description,
                 "context": context,
                 "parsed_query": query,
-                "filters_applied": filters is not None
+                "filters_applied": filters is not None,
             }
 
             return result
@@ -305,7 +304,7 @@ def create_mcp_tools(mcp: FastMCP) -> None:
         gene_symbol: str,
         target_species: list[str] = None,
         analysis_level: str = "Eukaryota",
-        include_sequence_info: bool = True
+        include_sequence_info: bool = True,
     ) -> dict[str, Any]:
         """
         基因进化分析工具 - MCP接口包装
@@ -324,14 +323,18 @@ def create_mcp_tools(mcp: FastMCP) -> None:
             analyze_gene_evolution_tool("TP53", ["human", "mouse", "rat", "dog"])
         """
         return await analyze_gene_evolution(
-            gene_symbol, target_species, analysis_level, include_sequence_info, _query_executor
+            gene_symbol,
+            target_species,
+            analysis_level,
+            include_sequence_info,
+            _query_executor,
         )
 
     @mcp.tool()
     async def build_phylogenetic_profile_tool(
         gene_symbols: list[str],
         species_set: list[str] = None,
-        include_domain_info: bool = True
+        include_domain_info: bool = True,
     ) -> dict[str, Any]:
         """
         系统发育图谱构建工具 - MCP接口包装
@@ -351,3 +354,97 @@ def create_mcp_tools(mcp: FastMCP) -> None:
         return await build_phylogenetic_profile(
             gene_symbols, species_set, include_domain_info, _query_executor
         )
+
+    @mcp.tool()
+    async def kegg_pathway_enrichment_tool(
+        gene_list: list[str],
+        organism: str = "hsa",
+        pvalue_threshold: float = 0.05,
+        min_gene_count: int = 2,
+    ) -> dict[str, Any]:
+        """
+        KEGG通路富集分析工具 - MVP版本
+
+        分析基因列表在KEGG通路中的富集情况，识别显著相关的生物学通路
+
+        Args:
+            gene_list: 基因列表（如 ["TP53", "BRCA1", "BRCA2"]）
+            organism: 生物体代码（默认 "hsa" 人类）
+            pvalue_threshold: p值显著性阈值（默认 0.05）
+            min_gene_count: 通路中最小基因数量（默认 2）
+
+        Returns:
+            通路富集分析结果，包含：
+            - 显著富集的通路列表
+            - p值和FDR校正后的统计显著性
+            - 富集倍数和基因数量信息
+            - 分析参数和元数据
+
+        Examples:
+            # 分析癌症相关基因的通路富集
+            kegg_pathway_enrichment_tool(["TP53", "BRCA1", "BRCA2", "EGFR"])
+
+            # 分析小鼠基因的通路富集
+            kegg_pathway_enrichment_tool(["Trp53", "Brca1"], organism="mmu")
+
+            # 使用更严格的显著性阈值
+            kegg_pathway_enrichment_tool(["TP53", "BRCA1"], pvalue_threshold=0.01)
+        """
+        try:
+            # 使用QueryParser解析为通路富集查询
+            parsed = QueryParser.parse(gene_list, query_type="pathway_enrichment")
+
+            # 更新参数
+            parsed.params.update(
+                {
+                    "gene_list": gene_list,
+                    "organism": organism,
+                    "pvalue_threshold": pvalue_threshold,
+                    "min_gene_count": min_gene_count,
+                }
+            )
+
+            # 执行查询
+            result = await _query_executor.execute(parsed)
+
+            # 格式化结果
+            if "result" in result:
+                enrichment_data = result["result"]
+
+                # 添加查询信息
+                enrichment_data["query_info"] = {
+                    "gene_list": gene_list,
+                    "analysis_date": "2025-10-24",
+                    "organism": organism,
+                    "method": "KEGG Pathway Enrichment",
+                    "parameters": {
+                        "pvalue_threshold": pvalue_threshold,
+                        "min_gene_count": min_gene_count,
+                    },
+                }
+
+                return enrichment_data
+            elif "error" in result:
+                return {
+                    "error": result["error"],
+                    "query_genes": gene_list,
+                    "organism": organism,
+                    "suggestions": [
+                        "检查基因ID格式是否正确",
+                        "确认生物体代码是否支持",
+                        "验证网络连接是否正常",
+                    ],
+                }
+            else:
+                return {
+                    "error": "Unknown error occurred during pathway enrichment analysis",
+                    "query_genes": gene_list,
+                    "organism": organism,
+                }
+
+        except Exception as e:
+            return {
+                "error": f"KEGG pathway enrichment analysis failed: {str(e)}",
+                "query_genes": gene_list,
+                "organism": organism,
+            }

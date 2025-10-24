@@ -248,13 +248,13 @@ async def error_handling_example():
 
         # 1. 参数验证错误
         try:
-            result = await server.execute_request("get_gene_info", {})
+            await server.execute_request("get_gene_info", {})
         except ValidationError as e:
             print(f"✅ 参数验证错误捕获: {e}")
 
         # 2. 数据未找到错误
         try:
-            result = await server.execute_request(
+            await server.execute_request(
                 "get_gene_info", {"gene_id": "NONEXISTENT_GENE"}
             )
         except DataNotFoundError as e:
@@ -264,14 +264,14 @@ async def error_handling_example():
 
         # 3. 不支持的操作
         try:
-            result = await server.execute_request("unsupported_operation", {})
+            await server.execute_request("unsupported_operation", {})
         except ValidationError as e:
             print(f"✅ 不支持操作错误捕获: {e}")
 
         # 4. 批量大小超限
         try:
             too_many_genes = [f"GENE{i}" for i in range(200)]
-            result = await server.execute_request(
+            await server.execute_request(
                 "batch_gene_info", {"gene_ids": too_many_genes}
             )
         except ValidationError as e:

@@ -6,16 +6,16 @@
 不依赖外部API，适合持续集成和开发环境测试
 """
 
-import sys
 import os
+import sys
+
+from genome_mcp.core import QueryParser, QueryType
 
 # 添加项目路径
 script_dir = os.path.dirname(os.path.abspath(__file__))
 project_dir = os.path.dirname(script_dir)
-src_dir = os.path.join(project_dir, 'src')
+src_dir = os.path.join(project_dir, "src")
 sys.path.insert(0, src_dir)
-
-from genome_mcp.core import QueryParser, QueryType, QueryExecutor, ParsedQuery
 
 
 def test_query_parser():
@@ -31,7 +31,7 @@ def test_query_parser():
         ("chr17:7565097-7590856", QueryType.REGION, "区域搜索"),
         ("P04637", QueryType.PROTEIN, "UniProt蛋白质查询"),
         ("breast cancer genes", QueryType.SEARCH, "语义搜索"),
-        (["TP53", "BRCA1", "BRCA2"], QueryType.BATCH, "批量查询")
+        (["TP53", "BRCA1", "BRCA2"], QueryType.BATCH, "批量查询"),
     ]
 
     passed = 0
@@ -50,7 +50,9 @@ def test_query_parser():
                 print(f"  ✅ '{query_str}' → {parsed.type.value} ({description})")
                 passed += 1
             else:
-                print(f"  ❌ '{query_str}' → {parsed.type.value} (期望: {expected_type.value}, {description})")
+                print(
+                    f"  ❌ '{query_str}' → {parsed.type.value} (期望: {expected_type.value}, {description})"
+                )
         except Exception as e:
             print(f"  ❌ '{query}' → 错误: {e} ({description})")
 
@@ -69,7 +71,7 @@ def test_evolution_keywords():
         "species distribution",
         "conserved domains",
         "family evolution",
-        "ancestral genes"
+        "ancestral genes",
     ]
 
     ortholog_queries = [
@@ -77,7 +79,7 @@ def test_evolution_keywords():
         "homologous genes",
         "paralog analysis",
         "ortholog identification",
-        "homolog comparison"
+        "homolog comparison",
     ]
 
     passed_evolution = 0
@@ -120,21 +122,21 @@ def test_query_parameters():
 
     test_cases = [
         ("TP53", QueryType.INFO, {"gene_id": "TP53"}),
-        ("TP53 protein", QueryType.PROTEIN, {
-            "protein_query": "TP53 protein",
-            "max_results": 20,
-            "organism": "9606"
-        }),
-        ("chr17:7565097-7590856", QueryType.REGION, {
-            "chromosome": "chr17",
-            "start": 7565097,
-            "end": 7590856
-        }),
-        ("TP53 homologs", QueryType.ORTHOLOG, {
-            "gene_query": "TP53 homologs",
-            "limit": 50,
-            "target_species": None
-        }),
+        (
+            "TP53 protein",
+            QueryType.PROTEIN,
+            {"protein_query": "TP53 protein", "max_results": 20, "organism": "9606"},
+        ),
+        (
+            "chr17:7565097-7590856",
+            QueryType.REGION,
+            {"chromosome": "chr17", "start": 7565097, "end": 7590856},
+        ),
+        (
+            "TP53 homologs",
+            QueryType.ORTHOLOG,
+            {"gene_query": "TP53 homologs", "limit": 50, "target_species": None},
+        ),
     ]
 
     passed = 0
@@ -150,7 +152,9 @@ def test_query_parameters():
             for key, value in expected_params.items():
                 if parsed.params.get(key) != value:
                     params_match = False
-                    print(f"    🔍 参数 '{key}': 期望 {value}, 实际 {parsed.params.get(key)}")
+                    print(
+                        f"    🔍 参数 '{key}': 期望 {value}, 实际 {parsed.params.get(key)}"
+                    )
                     break
 
             if type_match and params_match:
@@ -173,25 +177,16 @@ def test_module_imports():
 
     try:
         # 测试核心模块导入
-        from genome_mcp.core import (
-            QueryParser, QueryType, QueryExecutor, ParsedQuery,
-            NCBIClient, UniProtClient, OrthoDBClient
-        )
-        print(f"  ✅ 核心模块导入成功")
+
+        print("  ✅ 核心模块导入成功")
 
         # 测试进化工具模块导入
-        from genome_mcp.core.evolution_tools import (
-            analyze_gene_evolution, build_phylogenetic_profile
-        )
-        print(f"  ✅ 进化工具模块导入成功")
+
+        print("  ✅ 进化工具模块导入成功")
 
         # 测试主模块导入
-        from genome_mcp import (
-            QueryParser as MainQueryParser,
-            QueryType as MainQueryType,
-            analyze_gene_evolution as MainAnalyzeEvolution
-        )
-        print(f"  ✅ 主模块导入成功")
+
+        print("  ✅ 主模块导入成功")
 
         return True
 
@@ -210,7 +205,7 @@ def test_batch_operations():
         parsed = QueryParser.parse(batch_query)
 
         if parsed.type == QueryType.BATCH and parsed.is_batch:
-            print(f"  ✅ 批量查询解析成功")
+            print("  ✅ 批量查询解析成功")
             print(f"    📋 查询类型: {parsed.type.value}")
             print(f"    📝 查询字符串: {parsed.query}")
             print(f"    🔢 批量标识: {parsed.is_batch}")
@@ -218,18 +213,18 @@ def test_batch_operations():
 
             # 验证基因列表
             expected_genes = ["TP53", "BRCA1", "BRCA2", "EGFR", "MYC"]
-            actual_genes = parsed.params.get('gene_ids', [])
+            actual_genes = parsed.params.get("gene_ids", [])
 
             if actual_genes == expected_genes:
-                print(f"  ✅ 批量基因列表正确")
+                print("  ✅ 批量基因列表正确")
                 return True
             else:
-                print(f"  ❌ 批量基因列表错误")
+                print("  ❌ 批量基因列表错误")
                 print(f"    期望: {expected_genes}")
                 print(f"    实际: {actual_genes}")
                 return False
         else:
-            print(f"  ❌ 批量查询解析失败")
+            print("  ❌ 批量查询解析失败")
             return False
 
     except Exception as e:
@@ -261,7 +256,7 @@ def test_edge_cases():
                 try:
                     parsed = QueryParser.parse(query)
                     print(f"  ❌ '{query}' 应该出错但没有出错 ({description})")
-                except:
+                except Exception:
                     print(f"  ✅ '{query}' 正确处理为错误 ({description})")
                     passed += 1
             else:
@@ -271,7 +266,9 @@ def test_edge_cases():
                     print(f"  ✅ '{query}' → {parsed.type.value} ({description})")
                     passed += 1
                 else:
-                    print(f"  ❌ '{query}' → {parsed.type.value} (期望: {expected_behavior}, {description})")
+                    print(
+                        f"  ❌ '{query}' → {parsed.type.value} (期望: {expected_behavior}, {description})"
+                    )
 
         except Exception as e:
             print(f"  ⚠️ '{query}' → 意外错误: {e} ({description})")

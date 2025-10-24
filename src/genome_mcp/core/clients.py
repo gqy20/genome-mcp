@@ -2,10 +2,9 @@
 """
 API客户端模块 - 包含所有外部API的客户端实现
 
-NCBI, UniProt, OrthoDB API客户端
+NCBI, UniProt, OrthoDB, KEGG API客户端
 """
 
-import re
 from typing import Any
 
 import aiohttp
@@ -22,7 +21,10 @@ class NCBIClient:
             "TP53": {"name": "Tumor protein p53", "chromosome": "17p13.1"},
             "BRCA1": {"name": "BRCA1 DNA repair associated", "chromosome": "17q21.31"},
             "BRCA2": {"name": "BRCA2 DNA repair associated", "chromosome": "13q13.1"},
-            "EGFR": {"name": "Epidermal growth factor receptor", "chromosome": "7p11.2"},
+            "EGFR": {
+                "name": "Epidermal growth factor receptor",
+                "chromosome": "7p11.2",
+            },
             "MYC": {"name": "MYC proto oncogene", "chromosome": "8q24.21"},
         }
 
@@ -120,7 +122,7 @@ class UniProtClient:
         query: str,
         max_results: int = 20,
         fields: str = "accession,id,protein_name,gene_names,organism_name,sequence,length,go_terms,keywords",
-        organism: str = "9606"  # Human by default
+        organism: str = "9606",  # Human by default
     ) -> dict[str, Any]:
         """搜索蛋白质"""
         url = f"{self.BASE_URL}/search"
@@ -128,7 +130,7 @@ class UniProtClient:
             "query": f"{query} AND organism_id:{organism}",
             "fields": fields,
             "size": max_results,
-            "format": "json"
+            "format": "json",
         }
 
         async with self.session.get(url, params=params) as response:
@@ -138,31 +140,44 @@ class UniProtClient:
         processed_results = []
 
         for protein in results:
-            processed_results.append({
-                "accession": protein.get("primaryAccession"),
-                "id": protein.get("uniProtkbId"),
-                "protein_name": protein.get("proteinDescription", {}).get("recommendedName", {}).get("fullName", {}).get("value", ""),
-                "gene_names": [gene.get("geneName", {}).get("value", "") for gene in protein.get("genes", [])],
-                "organism": protein.get("organism", {}).get("scientificName", ""),
-                "sequence": protein.get("sequence", {}).get("value", ""),
-                "length": protein.get("sequence", {}).get("length", 0),
-                "go_terms": self._extract_go_terms(protein.get("uniProtKBCrossReferences", [])),
-                "keywords": [keyword.get("name", "") for keyword in protein.get("keywords", [])],
-                "function": self._extract_function(protein.get("comments", [])),
-                "diseases": self._extract_diseases(protein.get("diseases", [])),
-                "features": self._extract_features(protein.get("features", []))
-            })
+            processed_results.append(
+                {
+                    "accession": protein.get("primaryAccession"),
+                    "id": protein.get("uniProtkbId"),
+                    "protein_name": protein.get("proteinDescription", {})
+                    .get("recommendedName", {})
+                    .get("fullName", {})
+                    .get("value", ""),
+                    "gene_names": [
+                        gene.get("geneName", {}).get("value", "")
+                        for gene in protein.get("genes", [])
+                    ],
+                    "organism": protein.get("organism", {}).get("scientificName", ""),
+                    "sequence": protein.get("sequence", {}).get("value", ""),
+                    "length": protein.get("sequence", {}).get("length", 0),
+                    "go_terms": self._extract_go_terms(
+                        protein.get("uniProtKBCrossReferences", [])
+                    ),
+                    "keywords": [
+                        keyword.get("name", "")
+                        for keyword in protein.get("keywords", [])
+                    ],
+                    "function": self._extract_function(protein.get("comments", [])),
+                    "diseases": self._extract_diseases(protein.get("diseases", [])),
+                    "features": self._extract_features(protein.get("features", [])),
+                }
+            )
 
         return {
             "query": query,
             "count": len(processed_results),
-            "results": processed_results
+            "results": processed_results,
         }
 
     async def get_protein_by_accession(
         self,
         accession: str,
-        fields: str = "accession,id,protein_name,gene_names,organism_name,sequence,length,go_terms,keywords,diseases,comments,features"
+        fields: str = "accession,id,protein_name,gene_names,organism_name,sequence,length,go_terms,keywords,diseases,comments,features",
     ) -> dict[str, Any]:
         """通过访问号获取蛋白质详细信息"""
         url = f"{self.BASE_URL}/{accession}"
@@ -177,26 +192,37 @@ class UniProtClient:
         return {
             "accession": data.get("primaryAccession"),
             "id": data.get("uniProtkbId"),
-            "protein_name": data.get("proteinDescription", {}).get("recommendedName", {}).get("fullName", {}).get("value", ""),
-            "gene_names": [gene.get("geneName", {}).get("value", "") for gene in data.get("genes", [])],
+            "protein_name": data.get("proteinDescription", {})
+            .get("recommendedName", {})
+            .get("fullName", {})
+            .get("value", ""),
+            "gene_names": [
+                gene.get("geneName", {}).get("value", "")
+                for gene in data.get("genes", [])
+            ],
             "organism": data.get("organism", {}).get("scientificName", ""),
             "sequence": data.get("sequence", {}).get("value", ""),
             "length": data.get("sequence", {}).get("length", 0),
             "mass": data.get("sequence", {}).get("mass", 0),
-            "go_terms": self._extract_go_terms(data.get("uniProtKBCrossReferences", [])),
-            "keywords": [keyword.get("name", "") for keyword in data.get("keywords", [])],
+            "go_terms": self._extract_go_terms(
+                data.get("uniProtKBCrossReferences", [])
+            ),
+            "keywords": [
+                keyword.get("name", "") for keyword in data.get("keywords", [])
+            ],
             "function": self._extract_function(data.get("comments", [])),
             "diseases": self._extract_diseases(data.get("diseases", [])),
             "features": self._extract_features(data.get("features", [])),
-            "subcellular_location": self._extract_subcellular_location(data.get("comments", [])),
-            "interaction_partners": self._extract_interactions(data.get("uniProtKBCrossReferences", []))
+            "subcellular_location": self._extract_subcellular_location(
+                data.get("comments", [])
+            ),
+            "interaction_partners": self._extract_interactions(
+                data.get("uniProtKBCrossReferences", [])
+            ),
         }
 
     async def search_by_gene_exact(
-        self,
-        gene_symbol: str,
-        organism: str = "9606",
-        max_results: int = 10
+        self, gene_symbol: str, organism: str = "9606", max_results: int = 10
     ) -> dict[str, Any]:
         """通过精确基因符号搜索蛋白质"""
         query = f"gene_exact:{gene_symbol} AND organism_id:{organism}"
@@ -207,27 +233,39 @@ class UniProtClient:
         go_terms = []
         for ref in cross_references:
             if ref.get("database") == "GO":
-                go_terms.append({
-                    "id": ref.get("id", ""),
-                    "name": ref.get("properties", [{}])[0].get("value", "") if ref.get("properties") else ""
-                })
+                go_terms.append(
+                    {
+                        "id": ref.get("id", ""),
+                        "name": (
+                            ref.get("properties", [{}])[0].get("value", "")
+                            if ref.get("properties")
+                            else ""
+                        ),
+                    }
+                )
         return go_terms
 
     def _extract_function(self, comments: list) -> str:
         """提取功能描述"""
         for comment in comments:
             if comment.get("commentType") == "FUNCTION":
-                return comment.get("texts", [{}])[0].get("value", "") if comment.get("texts") else ""
+                return (
+                    comment.get("texts", [{}])[0].get("value", "")
+                    if comment.get("texts")
+                    else ""
+                )
         return ""
 
     def _extract_diseases(self, diseases: list) -> list:
         """提取疾病信息"""
         disease_list = []
         for disease in diseases:
-            disease_list.append({
-                "name": disease.get("diseaseName", ""),
-                "description": disease.get("description", "")
-            })
+            disease_list.append(
+                {
+                    "name": disease.get("diseaseName", ""),
+                    "description": disease.get("description", ""),
+                }
+            )
         return disease_list
 
     def _extract_features(self, features: list) -> list:
@@ -235,11 +273,13 @@ class UniProtClient:
         feature_list = []
         for feature in features:
             if feature.get("type") in ["DOMAIN", "REGION", "MOTIF"]:
-                feature_list.append({
-                    "type": feature.get("type", ""),
-                    "description": feature.get("description", ""),
-                    "location": feature.get("location", {})
-                })
+                feature_list.append(
+                    {
+                        "type": feature.get("type", ""),
+                        "description": feature.get("description", ""),
+                        "location": feature.get("location", {}),
+                    }
+                )
         return feature_list
 
     def _extract_subcellular_location(self, comments: list) -> list:
@@ -248,10 +288,12 @@ class UniProtClient:
         for comment in comments:
             if comment.get("commentType") == "SUBCELLULAR LOCATION":
                 for location in comment.get("subcellularLocations", []):
-                    locations.append({
-                        "location": location.get("location", {}).get("value", ""),
-                        "topology": location.get("topology", {}).get("value", "")
-                    })
+                    locations.append(
+                        {
+                            "location": location.get("location", {}).get("value", ""),
+                            "topology": location.get("topology", {}).get("value", ""),
+                        }
+                    )
         return locations
 
     def _extract_interactions(self, cross_references: list) -> list:
@@ -259,10 +301,7 @@ class UniProtClient:
         interactions = []
         for ref in cross_references:
             if ref.get("database") == "IntAct":
-                interactions.append({
-                    "database": "IntAct",
-                    "id": ref.get("id", "")
-                })
+                interactions.append({"database": "IntAct", "id": ref.get("id", "")})
         return interactions
 
 
@@ -283,10 +322,7 @@ class OrthoDBClient:
             await self.session.close()
 
     async def search_orthologs(
-        self,
-        gene_id: str,
-        target_species: str = None,
-        limit: int = 50
+        self, gene_id: str, target_species: str = None, limit: int = 50
     ) -> dict[str, Any]:
         """搜索同源基因"""
         try:
@@ -298,9 +334,11 @@ class OrthoDBClient:
                 if response.status != 200:
                     return {"error": f"Gene search failed: HTTP {response.status}"}
 
-                content_type = response.headers.get('content-type', '')
-                if 'text/html' in content_type:
-                    return {"error": f"Gene search failed: HTML response instead of JSON. API may be unavailable."}
+                content_type = response.headers.get("content-type", "")
+                if "text/html" in content_type:
+                    return {
+                        "error": "Gene search failed: HTML response instead of JSON. API may be unavailable."
+                    }
 
                 gene_data = await response.json()
 
@@ -316,47 +354,50 @@ class OrthoDBClient:
             if target_species:
                 orthologs_params["target_organisms"] = target_species
 
-            async with self.session.get(orthologs_url, params=orthologs_params) as response:
+            async with self.session.get(
+                orthologs_url, params=orthologs_params
+            ) as response:
                 if response.status != 200:
                     return {"error": f"Ortholog search failed: HTTP {response.status}"}
 
-                content_type = response.headers.get('content-type', '')
-                if 'text/html' in content_type:
-                    return {"error": f"Ortholog search failed: HTML response instead of JSON. API may be unavailable."}
+                content_type = response.headers.get("content-type", "")
+                if "text/html" in content_type:
+                    return {
+                        "error": "Ortholog search failed: HTML response instead of JSON. API may be unavailable."
+                    }
 
                 orthologs_data = await response.json()
 
             # 处理结果
             orthologs = []
             for ortholog in orthologs_data.get("data", []):
-                orthologs.append({
-                    "gene_id": ortholog.get("genes", [{}])[0].get("gene_id", ""),
-                    "orthodb_id": ortholog.get("orthodb_id", ""),
-                    "organism_name": ortholog.get("organism_name", ""),
-                    "organism_id": ortholog.get("organism_id", ""),
-                    "protein_name": ortholog.get("protein_name", ""),
-                    "level": ortholog.get("level", ""),
-                    "support": ortholog.get("support", 0),
-                    "is_type": ortholog.get("is_type", "ortholog")
-                })
+                orthologs.append(
+                    {
+                        "gene_id": ortholog.get("genes", [{}])[0].get("gene_id", ""),
+                        "orthodb_id": ortholog.get("orthodb_id", ""),
+                        "organism_name": ortholog.get("organism_name", ""),
+                        "organism_id": ortholog.get("organism_id", ""),
+                        "protein_name": ortholog.get("protein_name", ""),
+                        "level": ortholog.get("level", ""),
+                        "support": ortholog.get("support", 0),
+                        "is_type": ortholog.get("is_type", "ortholog"),
+                    }
+                )
 
             return {
                 "query_gene": {
                     "gene_id": gene_id,
                     "orthodb_id": orthodb_id,
-                    "organism_id": organism_id
+                    "organism_id": organism_id,
                 },
                 "orthologs_count": len(orthologs),
-                "orthologs": orthologs
+                "orthologs": orthologs,
             }
         except Exception as e:
             return {"error": f"Ortholog search error: {str(e)}"}
 
     async def get_orthologs_by_species(
-        self,
-        gene_id: str,
-        species_list: list[str],
-        limit: int = 100
+        self, gene_id: str, species_list: list[str], limit: int = 100
     ) -> dict[str, Any]:
         """获取指定物种的同源基因"""
         # OrthoDB物种ID映射（简化版）
@@ -368,7 +409,7 @@ class OrthoDBClient:
             "fruit_fly": "7227",
             "nematode": "6239",
             "arabidopsis": "3702",
-            "yeast": "4932"
+            "yeast": "4932",
         }
 
         target_ids = []
@@ -383,16 +424,11 @@ class OrthoDBClient:
         return await self.search_orthologs(gene_id, ",".join(target_ids), limit)
 
     async def get_ortholog_groups(
-        self,
-        gene_ids: list[str],
-        level: str = "Eukaryota"
+        self, gene_ids: list[str], level: str = "Eukaryota"
     ) -> dict[str, Any]:
         """获取基因群组信息"""
         groups_url = f"{self.BASE_URL}/groups"
-        groups_params = {
-            "level": level,
-            "genes": ",".join(gene_ids)
-        }
+        groups_params = {"level": level, "genes": ",".join(gene_ids)}
 
         async with self.session.get(groups_url, params=groups_params) as response:
             groups_data = await response.json()
@@ -400,7 +436,7 @@ class OrthoDBClient:
         return {
             "level": level,
             "groups_count": len(groups_data.get("data", [])),
-            "groups": groups_data.get("data", [])
+            "groups": groups_data.get("data", []),
         }
 
     async def get_phylogenetic_levels(self) -> dict[str, Any]:
@@ -412,24 +448,131 @@ class OrthoDBClient:
                 if response.status != 200:
                     return {"error": f"Levels fetch failed: HTTP {response.status}"}
 
-                content_type = response.headers.get('content-type', '')
-                if 'text/html' in content_type:
-                    return {"error": "Levels fetch failed: HTML response instead of JSON. API may be unavailable."}
+                content_type = response.headers.get("content-type", "")
+                if "text/html" in content_type:
+                    return {
+                        "error": "Levels fetch failed: HTML response instead of JSON. API may be unavailable."
+                    }
 
                 levels_data = await response.json()
 
             levels = []
             for level in levels_data.get("data", []):
-                levels.append({
-                    "level": level.get("level", ""),
-                    "name": level.get("name", ""),
-                    "taxid": level.get("taxid", ""),
-                    "species_count": level.get("species_count", 0)
-                })
+                levels.append(
+                    {
+                        "level": level.get("level", ""),
+                        "name": level.get("name", ""),
+                        "taxid": level.get("taxid", ""),
+                        "species_count": level.get("species_count", 0),
+                    }
+                )
 
             return {
                 "levels_count": len(levels),
-                "levels": levels[:20]  # 返回前20个层级
+                "levels": levels[:20],  # 返回前20个层级
             }
         except Exception as e:
             return {"error": f"Levels fetch error: {str(e)}"}
+
+
+class KEGGClient:
+    """KEGG API客户端 - 通路分析功能"""
+
+    BASE_URL = "https://rest.kegg.jp/"
+
+    def __init__(self):
+        self.session = None
+
+    async def __aenter__(self):
+        self.session = aiohttp.ClientSession()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self.session:
+            await self.session.close()
+
+    async def get_pathway_list(self, organism: str = "hsa") -> dict[str, Any]:
+        """获取生物体通路列表"""
+        url = f"{self.BASE_URL}list/pathway/{organism}"
+
+        try:
+            async with self.session.get(url) as response:
+                if response.status != 200:
+                    return {
+                        "error": f"Pathway list fetch failed: HTTP {response.status}"
+                    }
+
+                text = await response.text()
+                pathways = {}
+
+                for line in text.strip().split("\n"):
+                    if line and "\t" in line:
+                        pathway_id, pathway_name = line.split("\t", 1)
+                        pathways[pathway_id] = pathway_name
+
+                return {
+                    "organism": organism,
+                    "pathway_count": len(pathways),
+                    "pathways": pathways,
+                }
+        except Exception as e:
+            return {"error": f"Pathway list fetch error: {str(e)}"}
+
+    async def get_gene_pathway_mapping(
+        self, gene_list: list[str], organism: str
+    ) -> dict[str, Any]:
+        """获取基因-通路映射关系"""
+        gene_str = "+".join(gene_list)
+        url = f"{self.BASE_URL}link/pathway/{organism}:{gene_str}"
+
+        try:
+            async with self.session.get(url) as response:
+                if response.status != 200:
+                    return {
+                        "error": f"Gene-pathway mapping fetch failed: HTTP {response.status}"
+                    }
+
+                text = await response.text()
+                gene_pathways = {}
+
+                for line in text.strip().split("\n"):
+                    if line and "\t" in line:
+                        gene_id, pathway_id = line.split("\t", 1)
+
+                        # 标准化基因ID
+                        gene_id = self._normalize_gene_id(gene_id)
+
+                        if gene_id not in gene_pathways:
+                            gene_pathways[gene_id] = []
+                        gene_pathways[gene_id].append(pathway_id)
+
+                return {
+                    "organism": organism,
+                    "gene_count": len(gene_pathways),
+                    "gene_pathways": gene_pathways,
+                }
+        except Exception as e:
+            return {"error": f"Gene-pathway mapping fetch error: {str(e)}"}
+
+    async def get_pathway_info(self, pathway_id: str) -> dict[str, Any]:
+        """获取通路详细信息"""
+        url = f"{self.BASE_URL}get/{pathway_id}"
+
+        try:
+            async with self.session.get(url) as response:
+                if response.status != 200:
+                    return {
+                        "error": f"Pathway info fetch failed: HTTP {response.status}"
+                    }
+
+                text = await response.text()
+                return {"pathway_id": pathway_id, "data": text}
+        except Exception as e:
+            return {"error": f"Pathway info fetch error: {str(e)}"}
+
+    def _normalize_gene_id(self, gene_id: str) -> str:
+        """标准化基因ID格式"""
+        # KEGG返回的基因ID格式可能是 organism:gene_id
+        if ":" in gene_id:
+            return gene_id.split(":", 1)[1]
+        return gene_id

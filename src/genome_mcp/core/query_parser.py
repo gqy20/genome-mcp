@@ -22,6 +22,7 @@ class QueryType(Enum):
     GENE_PROTEIN = "gene_protein"  # 基因-蛋白质整合查询
     ORTHOLOG = "ortholog"  # 同源基因查询
     EVOLUTION = "evolution"  # 进化分析查询
+    PATHWAY_ENRICHMENT = "pathway_enrichment"  # 通路富集分析
     UNKNOWN = "unknown"  # 未知类型
 
 
@@ -84,6 +85,8 @@ class QueryParser:
             return QueryParser._parse_ortholog(query)
         elif query_type == "evolution":
             return QueryParser._parse_evolution(query)
+        elif query_type == "pathway_enrichment":
+            return QueryParser._parse_pathway_enrichment(query)
         else:
             return QueryParser._parse_auto(query)
 
@@ -92,7 +95,9 @@ class QueryParser:
         """自动识别查询类型"""
 
         # UniProt 访问号模式 (如 P04637)
-        if re.match(r"^[A-Z0-9]{6,10}$", query) and not re.match(r"^[A-Z]{2,}\d+$", query):
+        if re.match(r"^[A-Z0-9]{6,10}$", query) and not re.match(
+            r"^[A-Z]{2,}\d+$", query
+        ):
             return QueryParser._parse_protein(query)
 
         # 基因ID模式
@@ -109,17 +114,46 @@ class QueryParser:
         ):
             return QueryParser._parse_batch([id.strip() for id in query.split(",")])
 
+        # 通路富集分析关键词检测
+        pathway_keywords = [
+            "pathway",
+            "enrichment",
+            "kegg",
+            "pathway analysis",
+            "functional analysis",
+            "go enrichment",
+            "pathway enrichment",
+        ]
+
         # 进化生物学关键词检测
         ortholog_keywords = ["homolog", "ortholog", "paralog", "across species"]
-        evolution_keywords = ["conservation", "phylogen", "evolution", "comparative", "species", "conserved", "family", "ancestral"]
+        evolution_keywords = [
+            "conservation",
+            "phylogen",
+            "evolution",
+            "comparative",
+            "species",
+            "conserved",
+            "family",
+            "ancestral",
+        ]
 
-        if any(keyword in query.lower() for keyword in ortholog_keywords):
+        if any(keyword in query.lower() for keyword in pathway_keywords):
+            return QueryParser._parse_pathway_enrichment(query)
+        elif any(keyword in query.lower() for keyword in ortholog_keywords):
             return QueryParser._parse_ortholog(query)
         elif any(keyword in query.lower() for keyword in evolution_keywords):
             return QueryParser._parse_evolution(query)
 
         # 蛋白质相关关键词检测
-        protein_keywords = ["protein", "sequence", "domain", "enzyme", "kinase", "receptor"]
+        protein_keywords = [
+            "protein",
+            "sequence",
+            "domain",
+            "enzyme",
+            "kinase",
+            "receptor",
+        ]
         if any(keyword in query.lower() for keyword in protein_keywords):
             return QueryParser._parse_protein(query)
 
@@ -184,8 +218,8 @@ class QueryParser:
             params={
                 "protein_query": query,
                 "max_results": 20,
-                "organism": "9606"  # Default to human
-            }
+                "organism": "9606",  # Default to human
+            },
         )
 
     @staticmethod
@@ -197,8 +231,8 @@ class QueryParser:
             params={
                 "gene_query": query,
                 "max_results": 20,
-                "organism": "9606"  # Default to human
-            }
+                "organism": "9606",  # Default to human
+            },
         )
 
     @staticmethod
@@ -207,11 +241,7 @@ class QueryParser:
         return ParsedQuery(
             type=QueryType.ORTHOLOG,
             query=query,
-            params={
-                "gene_query": query,
-                "limit": 50,
-                "target_species": None
-            }
+            params={"gene_query": query, "limit": 50, "target_species": None},
         )
 
     @staticmethod
@@ -220,10 +250,20 @@ class QueryParser:
         return ParsedQuery(
             type=QueryType.EVOLUTION,
             query=query,
+            params={"evolution_query": query, "analysis_type": "comprehensive"},
+        )
+
+    @staticmethod
+    def _parse_pathway_enrichment(query: str) -> ParsedQuery:
+        """解析通路富集分析查询"""
+        return ParsedQuery(
+            type=QueryType.PATHWAY_ENRICHMENT,
+            query=query,
             params={
-                "evolution_query": query,
-                "analysis_type": "comprehensive"
-            }
+                "pathway_query": query,
+                "organism": "hsa",  # 默认人类
+                "pvalue_threshold": 0.05,
+            },
         )
 
     @staticmethod

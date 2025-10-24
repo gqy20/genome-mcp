@@ -5,15 +5,15 @@
 提供一个统一的入口来运行所有测试脚本
 """
 
-import sys
-import os
 import subprocess
+import sys
 import time
 from pathlib import Path
 
 # 获取脚本目录
 script_dir = Path(__file__).parent
 project_dir = script_dir.parent
+
 
 def run_test_script(script_name, description):
     """运行单个测试脚本"""
@@ -35,7 +35,7 @@ def run_test_script(script_name, description):
             cwd=project_dir,
             capture_output=True,
             text=True,
-            timeout=60  # 60秒超时
+            timeout=60,  # 60秒超时
         )
 
         # 输出结果
@@ -43,7 +43,7 @@ def run_test_script(script_name, description):
             print(result.stdout)
 
         if result.stderr:
-            print(f"⚠️ 错误输出:")
+            print("⚠️ 错误输出:")
             print(result.stderr)
 
         print(f"{'='*60}")
@@ -85,7 +85,7 @@ def check_project_structure():
             missing_files.append(file_path)
 
     if missing_files:
-        print(f"❌ 缺失文件:")
+        print("❌ 缺失文件:")
         for file_path in missing_files:
             print(f"   - {file_path}")
         return False
@@ -100,13 +100,17 @@ def check_dependencies():
 
     try:
         import fastmcp
-        print(f"✅ FastMCP: {fastmcp.__version__ if hasattr(fastmcp, '__version__') else 'installed'}")
+
+        print(
+            f"✅ FastMCP: {fastmcp.__version__ if hasattr(fastmcp, '__version__') else 'installed'}"
+        )
     except ImportError:
         print("❌ FastMCP 未安装")
         return False
 
     try:
         import aiohttp
+
         print(f"✅ aiohttp: {aiohttp.__version__}")
     except ImportError:
         print("❌ aiohttp 未安装")

@@ -5,13 +5,11 @@ MCP客户端示例 - 演示如何连接和使用Genome MCP服务器
 
 import asyncio
 import json
-import subprocess
-import sys
-from typing import Any, Dict, List
+from typing import Any
 
 
 class MCPClient:
-    def __init__(self, command: List[str]):
+    def __init__(self, command: list[str]):
         self.process = None
         self.command = command
         self.request_id = 1
@@ -23,11 +21,11 @@ class MCPClient:
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
-            text=True
+            text=True,
         )
         print(f"MCP服务器已启动: {' '.join(self.command)}")
 
-    async def send_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
+    async def send_message(self, message: dict[str, Any]) -> dict[str, Any]:
         """发送JSON-RPC消息并接收响应"""
         if not self.process:
             raise RuntimeError("MCP服务器未启动")
@@ -42,7 +40,7 @@ class MCPClient:
 
         return json.loads(response_line.strip())
 
-    async def initialize(self) -> Dict[str, Any]:
+    async def initialize(self) -> dict[str, Any]:
         """初始化MCP连接"""
         init_message = {
             "jsonrpc": "2.0",
@@ -50,14 +48,9 @@ class MCPClient:
             "method": "initialize",
             "params": {
                 "protocolVersion": "2024-11-05",
-                "capabilities": {
-                    "roots": {"listChanged": True}
-                },
-                "clientInfo": {
-                    "name": "genome-mcp-example-client",
-                    "version": "1.0.0"
-                }
-            }
+                "capabilities": {"roots": {"listChanged": True}},
+                "clientInfo": {"name": "genome-mcp-example-client", "version": "1.0.0"},
+            },
         }
         self.request_id += 1
 
@@ -65,12 +58,12 @@ class MCPClient:
         print("✓ MCP连接已初始化")
         return response
 
-    async def list_tools(self) -> List[Dict[str, Any]]:
+    async def list_tools(self) -> list[dict[str, Any]]:
         """获取可用工具列表"""
         tools_message = {
             "jsonrpc": "2.0",
             "id": self.request_id,
-            "method": "tools/list"
+            "method": "tools/list",
         }
         self.request_id += 1
 
@@ -79,16 +72,13 @@ class MCPClient:
         print(f"✓ 发现 {len(tools)} 个可用工具")
         return tools
 
-    async def call_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Any:
+    async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> Any:
         """调用MCP工具"""
         call_message = {
             "jsonrpc": "2.0",
             "id": self.request_id,
             "method": "tools/call",
-            "params": {
-                "name": tool_name,
-                "arguments": arguments
-            }
+            "params": {"name": tool_name, "arguments": arguments},
         }
         self.request_id += 1
 
@@ -129,10 +119,9 @@ async def main():
 
         # 调用基因搜索
         print("\n搜索与癌症相关的基因...")
-        search_results = await client.call_tool("search_genes", {
-            "query": "cancer",
-            "max_results": 5
-        })
+        search_results = await client.call_tool(
+            "search_genes", {"query": "cancer", "max_results": 5}
+        )
         print(f"搜索结果: {json.dumps(search_results, indent=2, ensure_ascii=False)}")
 
     except Exception as e:

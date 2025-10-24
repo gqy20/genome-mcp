@@ -8,7 +8,7 @@
 import asyncio
 from typing import Any
 
-from .clients import NCBIClient, UniProtClient, OrthoDBClient
+from .clients import KEGGClient, NCBIClient, OrthoDBClient, UniProtClient
 from .query_parser import ParsedQuery, QueryType
 
 
@@ -19,6 +19,7 @@ class QueryExecutor:
         self.ncbi_client = NCBIClient()
         self.uniprot_client = UniProtClient()
         self.orthodb_client = OrthoDBClient()
+        self.kegg_client = KEGGClient()
 
     async def execute(self, parsed_query: ParsedQuery, **kwargs) -> dict[str, Any]:
         """执行解析后的查询"""
@@ -42,6 +43,8 @@ class QueryExecutor:
             return await self._execute_ortholog(params)
         elif parsed_query.type == QueryType.EVOLUTION:
             return await self._execute_evolution(params)
+        elif parsed_query.type == QueryType.PATHWAY_ENRICHMENT:
+            return await self._execute_pathway_enrichment(params)
         else:
             raise ValueError(f"Unsupported query type: {parsed_query.type}")
 
@@ -86,14 +89,16 @@ class QueryExecutor:
                 for uid in search_result["results"]:
                     if uid in details:
                         gene_data = details[uid]
-                        processed_results.append({
-                            "uid": uid,
-                            "summary": gene_data.get("summary", ""),
-                            "name": gene_data.get("name", ""),
-                            "chromosome": gene_data.get("chromosome", ""),
-                            "map_location": gene_data.get("maplocation", ""),
-                            "description": gene_data.get("description", ""),
-                        })
+                        processed_results.append(
+                            {
+                                "uid": uid,
+                                "summary": gene_data.get("summary", ""),
+                                "name": gene_data.get("name", ""),
+                                "chromosome": gene_data.get("chromosome", ""),
+                                "map_location": gene_data.get("maplocation", ""),
+                                "description": gene_data.get("description", ""),
+                            }
+                        )
 
                 return {
                     "term": term,
@@ -116,7 +121,6 @@ class QueryExecutor:
     async def _execute_batch(self, params: dict[str, Any]) -> dict[str, Any]:
         """执行批量查询"""
         gene_ids = params["gene_ids"]
-        max_results = params.get("max_results", 50)
 
         results = {}
 
@@ -207,7 +211,10 @@ class QueryExecutor:
         organism = params.get("organism", "9606")
 
         # 并发查询NCBI和UniProt
-        async with self.ncbi_client as ncbi_client, self.uniprot_client as uniprot_client:
+        async with (
+            self.ncbi_client as ncbi_client,
+            self.uniprot_client as uniprot_client,
+        ):
             # NCBI基因查询
             ncbi_task = ncbi_client.search(gene_query, max_results=1)
             # UniProt蛋白质查询
@@ -215,9 +222,7 @@ class QueryExecutor:
                 gene_query, organism, max_results
             )
 
-            ncbi_result, uniprot_result = await asyncio.gather(
-                ncbi_task, uniprot_task
-            )
+            ncbi_result, uniprot_result = await asyncio.gather(ncbi_task, uniprot_task)
 
             # 获取基因详细信息
             gene_data = None
@@ -236,8 +241,8 @@ class QueryExecutor:
                 "integration_info": {
                     "gene_found": gene_data is not None,
                     "protein_count": len(uniprot_result.get("results", [])),
-                    "organism": organism
-                }
+                    "organism": organism,
+                },
             }
 
             return integrated_result
@@ -267,7 +272,7 @@ class QueryExecutor:
                 "query_type": "ortholog",
                 "gene_query": gene_query,
                 "result": result,
-                "species_targeted": target_species is not None
+                "species_targeted": target_species is not None,
             }
 
     async def _execute_evolution(self, params: dict[str, Any]) -> dict[str, Any]:
@@ -284,13 +289,15 @@ class QueryExecutor:
                 "query": evolution_query,
                 "analysis_type": analysis_type,
                 "available_levels": levels_result["levels"][:10],  # 前10个层级
-                "recommendations": self._generate_evolution_recommendations(evolution_query)
+                "recommendations": self._generate_evolution_recommendations(
+                    evolution_query
+                ),
             }
 
             return {
                 "query_type": "evolution",
                 "evolution_query": evolution_query,
-                "result": analysis_result
+                "result": analysis_result,
             }
 
     def _generate_evolution_recommendations(self, query: str) -> list[str]:
@@ -299,16 +306,54 @@ class QueryExecutor:
         recommendations = []
 
         if "mammal" in query_lower or "vertebrate" in query_lower:
-            recommendations.append("Consider using level: Vertebrata for mammalian comparisons")
+            recommendations.append(
+                "Consider using level: Vertebrata for mammalian comparisons"
+            )
         if "insect" in query_lower or "arthropod" in query_lower:
-            recommendations.append("Consider using level: Arthropoda for insect studies")
+            recommendations.append(
+                "Consider using level: Arthropoda for insect studies"
+            )
         if "plant" in query_lower or "green plant" in query_lower:
-            recommendations.append("Consider using level: Viridiplantae for plant evolution")
+            recommendations.append(
+                "Consider using level: Viridiplantae for plant evolution"
+            )
         if "fungi" in query_lower or "yeast" in query_lower:
             recommendations.append("Consider using level: Fungi for fungal comparisons")
 
         if not recommendations:
-            recommendations.append("Use level: Eukaryota for broad eukaryotic comparisons")
+            recommendations.append(
+                "Use level: Eukaryota for broad eukaryotic comparisons"
+            )
             recommendations.append("Use level: Metazoa for animal-specific studies")
 
         return recommendations
+
+    async def _execute_pathway_enrichment(
+        self, params: dict[str, Any]
+    ) -> dict[str, Any]:
+        """执行通路富集分析查询"""
+        from ..analysis.kegg_analysis import KEGGEnrichment
+        from ..utils.validation import validate_parameters
+
+        try:
+            # 验证参数
+            validated_params = validate_parameters(params)
+
+            # 创建KEGG分析器
+            async with KEGGEnrichment() as analyzer:
+                # 执行通路富集分析
+                result = await analyzer.analyze_pathways(
+                    gene_list=validated_params["gene_list"],
+                    organism=validated_params["organism"],
+                    pvalue_threshold=validated_params["pvalue_threshold"],
+                    min_gene_count=validated_params["min_gene_count"],
+                )
+
+            return {"query_type": "pathway_enrichment", "result": result}
+
+        except Exception as e:
+            return {
+                "query_type": "pathway_enrichment",
+                "error": f"Pathway enrichment analysis failed: {str(e)}",
+                "params": params,
+            }

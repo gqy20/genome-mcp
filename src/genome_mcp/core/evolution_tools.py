@@ -16,7 +16,7 @@ def _generate_evolutionary_insights(result: dict[str, Any]) -> dict[str, Any]:
     insights = {
         "conservation_level": "unknown",
         "evolutionary_rate": "unknown",
-        "functional_constraints": []
+        "functional_constraints": [],
     }
 
     # 基于同源基因数量评估保守性
@@ -31,7 +31,9 @@ def _generate_evolutionary_insights(result: dict[str, Any]) -> dict[str, Any]:
         insights["functional_constraints"].append("Moderate functional constraints")
     else:
         insights["conservation_level"] = "lineage_specific"
-        insights["functional_constraints"].append("Potential lineage-specific adaptation")
+        insights["functional_constraints"].append(
+            "Potential lineage-specific adaptation"
+        )
 
     return insights
 
@@ -41,7 +43,9 @@ def _calculate_conservation_score(result: dict[str, Any]) -> float:
     orthologs_data = result.get("result", {}).get("orthologs", [])
 
     # 基于物种分布计算保守性评分
-    species_count = len(set(ortholog.get("organism_name", "") for ortholog in orthologs_data))
+    species_count = len(
+        {ortholog.get("organism_name", "") for ortholog in orthologs_data}
+    )
 
     # 归一化评分 (0-1)
     if species_count > 50:
@@ -73,12 +77,15 @@ def _analyze_phylogenetic_distribution(result: dict[str, Any]) -> dict[str, Any]
         "fish": 0,
         "invertebrates": 0,
         "plants": 0,
-        "fungi": 0
+        "fungi": 0,
     }
 
     for organism in distribution.keys():
         organism_lower = organism.lower()
-        if any(mammal in organism_lower for mammal in ["mammal", "human", "mouse", "rat", "dog", "cat"]):
+        if any(
+            mammal in organism_lower
+            for mammal in ["mammal", "human", "mouse", "rat", "dog", "cat"]
+        ):
             major_groups["mammals"] += 1
         elif "fish" in organism_lower or "zebrafish" in organism_lower:
             major_groups["fish"] += 1
@@ -92,29 +99,37 @@ def _analyze_phylogenetic_distribution(result: dict[str, Any]) -> dict[str, Any]
     return {
         "species_distribution": distribution,
         "major_group_counts": major_groups,
-        "total_species": len(distribution)
+        "total_species": len(distribution),
     }
 
 
-def _build_presence_absence_matrix(results: dict, species_set: list[str]) -> dict[str, dict]:
+def _build_presence_absence_matrix(
+    results: dict, species_set: list[str]
+) -> dict[str, dict]:
     """构建存在/缺失矩阵"""
     matrix = {}
 
     for gene_symbol, gene_result in results.items():
         gene_row = {}
         orthologs_data = gene_result.get("result", {}).get("orthologs", [])
-        present_species = set(ortholog.get("organism_name", "").lower() for ortholog in orthologs_data)
+        present_species = {
+            ortholog.get("organism_name", "").lower() for ortholog in orthologs_data
+        }
 
         for species in species_set:
             species_lower = species.lower()
-            gene_row[species] = any(species_lower in present.lower() for present in present_species)
+            gene_row[species] = any(
+                species_lower in present.lower() for present in present_species
+            )
 
         matrix[gene_symbol] = gene_row
 
     return matrix
 
 
-def _analyze_gene_family_evolution(results: dict, species_set: list[str]) -> dict[str, Any]:
+def _analyze_gene_family_evolution(
+    results: dict, species_set: list[str]
+) -> dict[str, Any]:
     """分析基因家族进化"""
     # 计算基因保守性
     conservation_scores = {}
@@ -129,7 +144,7 @@ def _analyze_gene_family_evolution(results: dict, species_set: list[str]) -> dic
         "conservation_scores": conservation_scores,
         "most_conserved_gene": most_conserved[0],
         "least_conserved_gene": least_conserved[0],
-        "conservation_range": most_conserved[1] - least_conserved[1]
+        "conservation_range": most_conserved[1] - least_conserved[1],
     }
 
 
@@ -159,7 +174,7 @@ async def analyze_gene_evolution(
     target_species: list[str] = None,
     analysis_level: str = "Eukaryota",
     include_sequence_info: bool = True,
-    query_executor: QueryExecutor = None
+    query_executor: QueryExecutor = None,
 ) -> dict[str, Any]:
     """
     基因进化分析 - 分析基因在跨物种间的进化关系
@@ -212,7 +227,7 @@ async def analyze_gene_evolution(
             "include_sequence_info": include_sequence_info,
             "evolutionary_insights": _generate_evolutionary_insights(result),
             "conservation_score": _calculate_conservation_score(result),
-            "phylogenetic_distribution": _analyze_phylogenetic_distribution(result)
+            "phylogenetic_distribution": _analyze_phylogenetic_distribution(result),
         }
 
         result["evolution_analysis"] = evolution_analysis
@@ -227,7 +242,7 @@ async def build_phylogenetic_profile(
     gene_symbols: list[str],
     species_set: list[str] = None,
     include_domain_info: bool = True,
-    query_executor: QueryExecutor = None
+    query_executor: QueryExecutor = None,
 ) -> dict[str, Any]:
     """
     构建系统发育图谱 - 分析多个基因在指定物种集合中的分布
@@ -255,7 +270,15 @@ async def build_phylogenetic_profile(
         query_executor = QueryExecutor()
 
     if species_set is None:
-        species_set = ["human", "mouse", "rat", "zebrafish", "fruitfly", "worm", "yeast"]
+        species_set = [
+            "human",
+            "mouse",
+            "rat",
+            "zebrafish",
+            "fruitfly",
+            "worm",
+            "yeast",
+        ]
 
     try:
         # 批量分析基因
@@ -264,8 +287,10 @@ async def build_phylogenetic_profile(
         for gene_symbol in gene_symbols:
             # 分析每个基因的同源关系
             gene_result = await analyze_gene_evolution(
-                gene_symbol, species_set, include_sequence_info=include_domain_info,
-                query_executor=query_executor
+                gene_symbol,
+                species_set,
+                include_sequence_info=include_domain_info,
+                query_executor=query_executor,
             )
             results[gene_symbol] = gene_result
 
@@ -284,8 +309,10 @@ async def build_phylogenetic_profile(
             "summary": {
                 "total_genes": len(gene_symbols),
                 "total_species": len(species_set),
-                "conservation_patterns": _identify_conservation_patterns(presence_matrix)
-            }
+                "conservation_patterns": _identify_conservation_patterns(
+                    presence_matrix
+                ),
+            },
         }
 
     except Exception as e:
