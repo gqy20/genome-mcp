@@ -35,6 +35,22 @@ uv add genome-mcp
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
+推荐使用 uvx 运行:
+
+```json
+{
+  "mcpServers": {
+    "genome-mcp": {
+      "command": "uvx",
+      "args": ["genome-mcp"],
+      "env": {}
+    }
+  }
+}
+```
+
+或使用传统方式:
+
 ```json
 {
   "mcpServers": {
@@ -47,7 +63,7 @@ uv add genome-mcp
 }
 ```
 
-或使用 uv 运行:
+或使用 uv run:
 
 ```json
 {
@@ -69,8 +85,8 @@ uv add genome-mcp
 {
   "mcpServers": {
     "genome-mcp": {
-      "command": "python",
-      "args": ["-m", "genome_mcp"]
+      "command": "uvx",
+      "args": ["genome-mcp"]
     }
   }
 }
@@ -84,8 +100,8 @@ uv add genome-mcp
 {
   "mcpServers": {
     "genome-mcp": {
-      "command": "python",
-      "args": ["-m", "genome_mcp"],
+      "command": "uvx",
+      "args": ["genome-mcp"],
       "env": {
         "GENOME_MCP_LOG_LEVEL": "info"
       }
@@ -102,8 +118,8 @@ uv add genome-mcp
 {
   "mcpServers": {
     "genome-mcp": {
-      "command": "python",
-      "args": ["-m", "genome_mcp"],
+      "command": "uvx",
+      "args": ["genome-mcp"],
       "timeout": 30000
     }
   }

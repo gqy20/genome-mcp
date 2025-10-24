@@ -83,8 +83,8 @@ jobs:
           {
             "mcpServers": {
               "genome-mcp": {
-                "command": "python",
-                "args": ["-m", "genome_mcp"]
+                "command": "uvx",
+                "args": ["genome-mcp"]
               }
             }
           }
