@@ -5,7 +5,6 @@ NCBI基因组数据服务器，通过MCP协议提供智能基因信息查询和�
 [![PyPI version](https://img.shields.io/pypi/v/genome-mcp.svg)](https://pypi.org/project/genome-mcp/)
 [![Python versions](https://img.shields.io/pypi/pyversions/genome-mcp.svg)](https://pypi.org/project/genome-mcp/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://github.com/gqy20/genome-mcp/workflows/CI/badge.svg)](https://github.com/gqy20/genome-mcp/actions)
 
 ## 🚀 特性
 
