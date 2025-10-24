@@ -17,6 +17,7 @@ from fastmcp import FastMCP
 mcp = FastMCP("Genome MCP", version="0.2.0")
 
 NCBI_BASE_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
+UNIPROT_BASE_URL = "https://rest.uniprot.org/uniprotkb"
 
 # 常用基因缓存（减少API调用）
 COMMON_GENES_CACHE = {
@@ -35,6 +36,8 @@ class QueryType(Enum):
     SEARCH = "search"  # 关键词搜索
     REGION = "region"  # 基因组区域搜索
     BATCH = "batch"  # 批量查询
+    PROTEIN = "protein"  # 蛋白质信息查询
+    GENE_PROTEIN = "gene_protein"  # 基因-蛋白质整合查询
     UNKNOWN = "unknown"  # 未知类型
 
 
@@ -107,6 +110,181 @@ class NCBIClient:
         return self.cache.get(gene_id)
 
 
+class UniProtClient:
+    """UniProt API客户端 - 处理蛋白质数据查询"""
+
+    def __init__(self):
+        self.session = None
+
+    async def __aenter__(self):
+        self.session = aiohttp.ClientSession()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self.session:
+            await self.session.close()
+
+    async def search_proteins(
+        self,
+        query: str,
+        max_results: int = 20,
+        fields: str = "accession,id,protein_name,gene_names,organism_name,sequence,length,go_terms,keywords",
+        organism: str = "9606"  # Human by default
+    ) -> dict[str, Any]:
+        """搜索蛋白质"""
+        url = f"{UNIPROT_BASE_URL}/search"
+        params = {
+            "query": f"{query} AND organism_id:{organism}",
+            "fields": fields,
+            "size": max_results,
+            "format": "json"
+        }
+
+        async with self.session.get(url, params=params) as response:
+            data = await response.json()
+
+        results = data.get("results", [])
+        processed_results = []
+
+        for protein in results:
+            processed_results.append({
+                "accession": protein.get("primaryAccession"),
+                "id": protein.get("uniProtkbId"),
+                "protein_name": protein.get("proteinDescription", {}).get("recommendedName", {}).get("fullName", {}).get("value", ""),
+                "gene_names": [gene.get("geneName", {}).get("value", "") for gene in protein.get("genes", [])],
+                "organism": protein.get("organism", {}).get("scientificName", ""),
+                "sequence": protein.get("sequence", {}).get("value", ""),
+                "length": protein.get("sequence", {}).get("length", 0),
+                "go_terms": self._extract_go_terms(protein.get("uniProtKBCrossReferences", [])),
+                "keywords": [keyword.get("name", "") for keyword in protein.get("keywords", [])],
+                "function": self._extract_function(protein.get("comments", [])),
+                "diseases": self._extract_diseases(protein.get("diseases", [])),
+                "features": self._extract_features(protein.get("features", []))
+            })
+
+        return {
+            "query": query,
+            "count": len(processed_results),
+            "results": processed_results
+        }
+
+    async def get_protein_by_accession(
+        self,
+        accession: str,
+        fields: str = "accession,id,protein_name,gene_names,organism_name,sequence,length,go_terms,keywords,diseases,comments,features"
+    ) -> dict[str, Any]:
+        """通过访问号获取蛋白质详细信息"""
+        url = f"{UNIPROT_BASE_URL}/{accession}"
+        params = {"fields": fields, "format": "json"}
+
+        async with self.session.get(url, params=params) as response:
+            if response.status != 200:
+                return {"error": f"Protein not found: {accession}"}
+            data = await response.json()
+
+        # 处理返回数据
+        return {
+            "accession": data.get("primaryAccession"),
+            "id": data.get("uniProtkbId"),
+            "protein_name": data.get("proteinDescription", {}).get("recommendedName", {}).get("fullName", {}).get("value", ""),
+            "gene_names": [gene.get("geneName", {}).get("value", "") for gene in data.get("genes", [])],
+            "organism": data.get("organism", {}).get("scientificName", ""),
+            "sequence": data.get("sequence", {}).get("value", ""),
+            "length": data.get("sequence", {}).get("length", 0),
+            "mass": data.get("sequence", {}).get("mass", 0),
+            "go_terms": self._extract_go_terms(data.get("uniProtKBCrossReferences", [])),
+            "keywords": [keyword.get("name", "") for keyword in data.get("keywords", [])],
+            "function": self._extract_function(data.get("comments", [])),
+            "diseases": self._extract_diseases(data.get("diseases", [])),
+            "features": self._extract_features(data.get("features", [])),
+            "subcellular_location": self._extract_subcellular_location(data.get("comments", [])),
+            "interaction_partners": self._extract_interactions(data.get("uniProtKBCrossReferences", []))
+        }
+
+    async def search_by_gene_exact(
+        self,
+        gene_symbol: str,
+        organism: str = "9606",
+        max_results: int = 10
+    ) -> dict[str, Any]:
+        """通过精确基因符号搜索蛋白质"""
+        query = f"gene_exact:{gene_symbol} AND organism_id:{organism}"
+        return await self.search_proteins(query, max_results)
+
+    def _extract_go_terms(self, cross_references: list) -> dict[str, list]:
+        """提取GO术语"""
+        go_terms = {"biological_process": [], "molecular_function": [], "cellular_component": []}
+
+        for ref in cross_references:
+            if ref.get("database") == "GO":
+                go_id = ref.get("id", "")
+                term = ref.get("properties", [{}])[0].get("value", "") if ref.get("properties") else ""
+                aspect = ref.get("properties", [{}])[1].get("value", "") if len(ref.get("properties", [])) > 1 else ""
+
+                if aspect == "P":
+                    go_terms["biological_process"].append({"id": go_id, "term": term})
+                elif aspect == "F":
+                    go_terms["molecular_function"].append({"id": go_id, "term": term})
+                elif aspect == "C":
+                    go_terms["cellular_component"].append({"id": go_id, "term": term})
+
+        return go_terms
+
+    def _extract_function(self, comments: list) -> str:
+        """提取功能描述"""
+        for comment in comments:
+            if comment.get("commentType") == "FUNCTION":
+                return comment.get("texts", [{}])[0].get("value", "") if comment.get("texts") else ""
+        return ""
+
+    def _extract_diseases(self, diseases: list) -> list:
+        """提取疾病信息"""
+        disease_list = []
+        for disease in diseases:
+            disease_info = {
+                "name": disease.get("diseaseName", ""),
+                "acronym": disease.get("acronym", ""),
+                "description": disease.get("description", "")
+            }
+            disease_list.append(disease_info)
+        return disease_list
+
+    def _extract_features(self, features: list) -> list:
+        """提取特征信息（结构域、位点等）"""
+        feature_list = []
+        for feature in features:
+            if feature.get("type") in ["DOMAIN", "REGION", "MOTIF", "BINDING", "ACT_SITE"]:
+                feature_info = {
+                    "type": feature.get("type", ""),
+                    "description": feature.get("description", ""),
+                    "location": feature.get("location", {})
+                }
+                feature_list.append(feature_info)
+        return feature_list
+
+    def _extract_subcellular_location(self, comments: list) -> list:
+        """提取亚细胞定位"""
+        locations = []
+        for comment in comments:
+            if comment.get("commentType") == "SUBCELLULAR LOCATION":
+                for location in comment.get("subcellularLocations", []):
+                    loc = location.get("location", {}).get("value", "")
+                    if loc:
+                        locations.append(loc)
+        return locations
+
+    def _extract_interactions(self, cross_references: list) -> list:
+        """提取蛋白质相互作用"""
+        interactions = []
+        for ref in cross_references:
+            if ref.get("database") == "IntAct":
+                interactions.append({
+                    "database": "IntAct",
+                    "id": ref.get("id", "")
+                })
+        return interactions
+
+
 class QueryParser:
     """智能查询解析器 - 自动识别查询意图"""
 
@@ -146,12 +324,20 @@ class QueryParser:
             return QueryParser._parse_region(query)
         elif query_type == "search":
             return QueryParser._parse_search(query)
+        elif query_type == "protein":
+            return QueryParser._parse_protein(query)
+        elif query_type == "gene_protein":
+            return QueryParser._parse_gene_protein(query)
         else:
             return QueryParser._parse_auto(query)
 
     @staticmethod
     def _parse_auto(query: str) -> ParsedQuery:
         """自动识别查询类型"""
+
+        # UniProt 访问号模式 (如 P04637)
+        if re.match(r"^[A-Z0-9]{6,10}$", query) and not re.match(r"^[A-Z]{2,}\d+$", query):
+            return QueryParser._parse_protein(query)
 
         # 基因ID模式
         if re.match(r"^[A-Z]{2,}\d+$", query):
@@ -166,6 +352,11 @@ class QueryParser:
             re.match(r"^[A-Z]{2,}\d+$", id.strip()) for id in query.split(",")
         ):
             return QueryParser._parse_batch([id.strip() for id in query.split(",")])
+
+        # 蛋白质相关关键词检测
+        protein_keywords = ["protein", "sequence", "domain", "enzyme", "kinase", "receptor"]
+        if any(keyword in query.lower() for keyword in protein_keywords):
+            return QueryParser._parse_protein(query)
 
         # 默认为搜索
         return QueryParser._parse_search(query)
@@ -219,12 +410,39 @@ class QueryParser:
 
         raise ValueError(f"Invalid region format: {query}")
 
+    @staticmethod
+    def _parse_protein(query: str) -> ParsedQuery:
+        """解析蛋白质查询"""
+        return ParsedQuery(
+            type=QueryType.PROTEIN,
+            query=query,
+            params={
+                "protein_query": query,
+                "max_results": 20,
+                "organism": "9606"  # Default to human
+            }
+        )
+
+    @staticmethod
+    def _parse_gene_protein(query: str) -> ParsedQuery:
+        """解析基因-蛋白质整合查询"""
+        return ParsedQuery(
+            type=QueryType.GENE_PROTEIN,
+            query=query,
+            params={
+                "gene_query": query,
+                "max_results": 20,
+                "organism": "9606"  # Default to human
+            }
+        )
+
 
 class QueryExecutor:
     """查询执行器 - 统一处理所有查询"""
 
     def __init__(self):
-        self.client = NCBIClient()
+        self.ncbi_client = NCBIClient()
+        self.uniprot_client = UniProtClient()
 
     async def execute(self, parsed_query: ParsedQuery, **kwargs) -> dict[str, Any]:
         """执行解析后的查询"""
@@ -240,6 +458,10 @@ class QueryExecutor:
             return await self._execute_region(params)
         elif parsed_query.type == QueryType.BATCH:
             return await self._execute_batch(params)
+        elif parsed_query.type == QueryType.PROTEIN:
+            return await self._execute_protein(params)
+        elif parsed_query.type == QueryType.GENE_PROTEIN:
+            return await self._execute_gene_protein(params)
         else:
             raise ValueError(f"Unsupported query type: {parsed_query.type}")
 
@@ -248,12 +470,12 @@ class QueryExecutor:
         gene_id = params["gene_id"]
 
         # 检查缓存
-        cached = self.client.get_cached_gene(gene_id)
+        cached = self.ncbi_client.get_cached_gene(gene_id)
         if cached:
             return {"gene_id": gene_id, "source": "cache", "data": cached}
 
         # 从NCBI获取
-        async with self.client as client:
+        async with self.ncbi_client as client:
             # 先搜索获取UID
             search_result = await client.search(gene_id, max_results=1)
             if not search_result["results"]:
@@ -275,7 +497,7 @@ class QueryExecutor:
         term = params["term"]
         max_results = params.get("max_results", 20)
 
-        async with self.client as client:
+        async with self.ncbi_client as client:
             result = await client.search(term, max_results)
 
             return {
@@ -290,7 +512,7 @@ class QueryExecutor:
         start = params["start"]
         end = params["end"]
 
-        async with self.client as client:
+        async with self.ncbi_client as client:
             result = await client.search_region(chromosome, start, end)
 
             return {
@@ -309,7 +531,7 @@ class QueryExecutor:
         # 批量搜索UID
         search_terms = " OR ".join([f'"{gid}"[gid]]' for gid in gene_ids])
 
-        async with self.client as client:
+        async with self.ncbi_client as client:
             search_result = await client.search(
                 search_terms, max_results=len(gene_ids) * 2
             )
@@ -360,6 +582,77 @@ class QueryExecutor:
 
             return {"batch_size": len(gene_ids), "results": results}
 
+    async def _execute_protein(self, params: dict[str, Any]) -> dict[str, Any]:
+        """执行蛋白质查询"""
+        protein_query = params["protein_query"]
+        max_results = params.get("max_results", 20)
+        organism = params.get("organism", "9606")
+
+        async with self.uniprot_client as client:
+            # 检查是否是UniProt访问号
+            if re.match(r"^[A-Z][0-9A-Z]{5}[0-9]$", protein_query):
+                # 直接获取蛋白质详细信息
+                result = await client.get_protein_by_accession(protein_query)
+                return {
+                    "protein_query": protein_query,
+                    "source": "uniprot_direct",
+                    "data": result
+                }
+            else:
+                # 搜索蛋白质
+                result = await client.search_proteins(
+                    protein_query,
+                    max_results=max_results,
+                    organism=organism
+                )
+                return {
+                    "protein_query": protein_query,
+                    "source": "uniprot_search",
+                    "data": result
+                }
+
+    async def _execute_gene_protein(self, params: dict[str, Any]) -> dict[str, Any]:
+        """执行基因-蛋白质整合查询"""
+        gene_query = params["gene_query"]
+        max_results = params.get("max_results", 20)
+        organism = params.get("organism", "9606")
+
+        # 并发查询NCBI和UniProt
+        async with self.ncbi_client as ncbi_client, self.uniprot_client as uniprot_client:
+            # NCBI基因查询
+            ncbi_task = ncbi_client.search(gene_query, max_results=1)
+            # UniProt蛋白质查询
+            uniprot_task = uniprot_client.search_by_gene_exact(
+                gene_query, organism, max_results
+            )
+
+            ncbi_result, uniprot_result = await asyncio.gather(
+                ncbi_task, uniprot_task
+            )
+
+            # 获取基因详细信息
+            gene_data = None
+            if ncbi_result["results"]:
+                gene_details = await ncbi_client.fetch_details(ncbi_result["results"])
+                if gene_details:
+                    uid = ncbi_result["results"][0]
+                    gene_data = gene_details.get(uid, {})
+
+            # 整合数据
+            integrated_result = {
+                "gene_query": gene_query,
+                "source": "integrated",
+                "gene_data": gene_data,
+                "protein_data": uniprot_result,
+                "integration_info": {
+                    "gene_found": gene_data is not None,
+                    "protein_count": len(uniprot_result.get("results", [])),
+                    "organism": organism
+                }
+            }
+
+            return integrated_result
+
 
 # 全局查询执行器实例
 _query_executor = QueryExecutor()
@@ -382,28 +675,64 @@ async def get_data(
 
     自动识别查询类型：
     - "TP53" → 基因信息查询
+    - "P04637" → 蛋白质详细信息查询
     - "cancer" → 基因搜索
+    - "protein kinase" → 蛋白质功能搜索
     - "chr17:7565097-7590856" → 区域搜索
     - "TP53, BRCA1" → 批量基因信息
     - "breast cancer genes" → 智能搜索
 
     Args:
-        query: 查询内容（可以是基因ID、搜索词、区域、ID列表）
-        query_type: 查询类型（auto/info/search/region）
-        data_type: 数据类型（gene/snp/protein）
+        query: 查询内容（可以是基因ID、蛋白质ID、搜索词、区域、ID列表）
+        query_type: 查询类型（auto/info/search/region/protein/gene_protein）
+        data_type: 数据类型（gene/protein/gene_protein）
         format: 返回格式（simple/detailed/raw）
-        species: 物种（默认：human）
+        species: 物种（默认：human，支持9606/human/mouse/rat等）
         max_results: 最大结果数（默认：20）
 
     Returns:
-        查询结果字典
+        查询结果字典，包含基因和/或蛋白质信息
+
+    Examples:
+        # 基因信息查询
+        get_data("TP53")
+
+        # 蛋白质查询
+        get_data("P04637", data_type="protein")
+
+        # 基因-蛋白质整合查询
+        get_data("TP53", data_type="gene_protein")
+
+        # 蛋白质功能搜索
+        get_data("tumor suppressor", data_type="protein")
     """
     try:
+        # 根据data_type参数调整查询类型
+        if data_type == "protein" and query_type == "auto":
+            query_type = "protein"
+        elif data_type == "gene_protein" and query_type == "auto":
+            query_type = "gene_protein"
+        elif data_type == "gene" and query_type == "auto":
+            query_type = "auto"  # 保持原有的自动识别
+
         # 解析查询意图
         parsed = QueryParser.parse(query, query_type)
 
+        # 添加物种信息到参数中
+        organism_mapping = {
+            "human": "9606",
+            "mouse": "10090",
+            "rat": "10116",
+            "zebrafish": "7955",
+            "fruitfly": "7227",
+            "worm": "6239"
+        }
+        if "organism" not in parsed.params:
+            organism_code = organism_mapping.get(species.lower(), "9606")
+            parsed.params["organism"] = organism_code
+
         # 执行查询
-        result = await _query_executor.execute(parsed)
+        result = await _query_executor.execute(parsed, max_results=max_results)
 
         # 格式化结果
         if format == "simple":
@@ -414,7 +743,7 @@ async def get_data(
             return result
 
     except Exception as e:
-        return {"error": str(e), "query": query}
+        return {"error": str(e), "query": query, "data_type": data_type}
 
 
 @mcp.tool()
@@ -550,22 +879,90 @@ def _format_simple_result(result: dict[str, Any]) -> dict[str, Any]:
             "results": successful,
         }
 
-    # 单个查询结果
-    if "data" in result and result["data"] is not None:
-        data = result["data"]
-        if isinstance(data, dict):
-            summary = data.get("summary", "")
-            if summary and len(summary) > 200:
-                summary = summary[:200] + "..."
+    source = result.get("source", "")
 
+    # 基因查询结果
+    if source in ["ncbi", "cache"]:
+        if "data" in result and result["data"] is not None:
+            data = result["data"]
+            if isinstance(data, dict):
+                summary = data.get("summary", "")
+                if summary and len(summary) > 200:
+                    summary = summary[:200] + "..."
+
+                return {
+                    "gene_id": result.get("gene_id"),
+                    "uid": result.get("uid"),
+                    "name": data.get("name"),
+                    "description": data.get("description"),
+                    "chromosome": data.get("chromosome"),
+                    "summary": summary,
+                    "data_type": "gene"
+                }
+
+    # 蛋白质查询结果
+    elif source in ["uniprot_direct", "uniprot_search"]:
+        data = result.get("data", {})
+        if isinstance(data, dict) and "results" in data:
+            # 搜索结果
+            proteins = data["results"]
+            if proteins:
+                protein = proteins[0]  # 取第一个结果
+                return {
+                    "protein_id": protein.get("accession"),
+                    "name": protein.get("protein_name"),
+                    "gene_names": protein.get("gene_names", []),
+                    "organism": protein.get("organism"),
+                    "length": protein.get("length"),
+                    "function": protein.get("function", "")[:200] + "..." if protein.get("function") else "",
+                    "data_type": "protein",
+                    "results_count": len(proteins)
+                }
+        elif isinstance(data, dict) and "accession" in data:
+            # 单个蛋白质详细信息
             return {
-                "gene_id": result.get("gene_id"),
-                "uid": result.get("uid"),
-                "name": data.get("name"),
-                "description": data.get("description"),
-                "chromosome": data.get("chromosome"),
-                "summary": summary,
+                "protein_id": data.get("accession"),
+                "name": data.get("protein_name"),
+                "gene_names": data.get("gene_names", []),
+                "organism": data.get("organism"),
+                "length": data.get("length"),
+                "function": data.get("function", "")[:200] + "..." if data.get("function") else "",
+                "data_type": "protein"
             }
+
+    # 基因-蛋白质整合查询结果
+    elif source == "integrated":
+        gene_data = result.get("gene_data", {})
+        protein_data = result.get("protein_data", {})
+        integration_info = result.get("integration_info", {})
+
+        formatted_result = {
+            "data_type": "gene_protein",
+            "integration_info": integration_info
+        }
+
+        # 添加基因信息
+        if gene_data:
+            formatted_result["gene"] = {
+                "uid": gene_data.get("uid"),
+                "name": gene_data.get("name"),
+                "description": gene_data.get("description"),
+                "chromosome": gene_data.get("chromosome")
+            }
+
+        # 添加蛋白质信息
+        if protein_data and protein_data.get("results"):
+            proteins = protein_data["results"]
+            if proteins:
+                protein = proteins[0]
+                formatted_result["protein"] = {
+                    "accession": protein.get("accession"),
+                    "name": protein.get("protein_name"),
+                    "length": protein.get("length"),
+                    "function": protein.get("function", "")[:200] + "..." if protein.get("function") else ""
+                }
+
+        return formatted_result
 
     return result
 
