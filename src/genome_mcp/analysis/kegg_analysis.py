@@ -135,8 +135,16 @@ class KEGGEnrichment:
         if not self.session:
             raise RuntimeError("客户端未初始化，请使用 async with 语法")
 
+        # 先解析基因符号为Entrez ID
+        resolved_genes = await self._resolve_gene_symbols(gene_list, organism)
+        if not resolved_genes:
+            return {
+                "error": "未找到有效的基因ID",
+                "suggestions": ["检查基因符号是否正确"],
+            }
+
         # 构建KEGG查询URL
-        gene_str = "+".join(gene_list)
+        gene_str = "+".join(resolved_genes)
         url = f"https://rest.kegg.jp/link/pathway/{organism}:{gene_str}"
 
         try:
@@ -268,6 +276,58 @@ class KEGGEnrichment:
         if ":" in gene_id:
             return gene_id.split(":", 1)[1]
         return gene_id
+
+    async def _resolve_gene_symbols(
+        self, gene_list: list[str], organism: str
+    ) -> list[str]:
+        """简单的基因符号解析为Entrez ID"""
+        resolved = []
+
+        for gene in gene_list:
+            # 如果已经是数字ID，直接使用
+            if gene.isdigit():
+                resolved.append(gene)
+                continue
+
+            # 跳过空字符串
+            if not gene or not gene.strip():
+                continue
+
+            # 使用KEGG find API查找基因符号
+            try:
+                url = f"https://rest.kegg.jp/find/{organism}/{gene}"
+                async with self.session.get(url) as response:
+                    if response.status == 200:
+                        text = await response.text()
+                        # 解析返回结果，寻找最匹配的Entrez ID
+                        best_match = None
+                        for line in text.strip().split("\n"):
+                            if line and "\t" in line:
+                                parts = line.split("\t")
+                                kegg_id = parts[0]
+                                description = parts[1] if len(parts) > 1 else ""
+
+                                if ":" in kegg_id:
+                                    entrez_id = kegg_id.split(":")[1]
+                                    # 验证是否为数字ID
+                                    if entrez_id.isdigit():
+                                        # 检查是否是精确匹配（基因符号在描述的开头）
+                                        if description.startswith(
+                                            gene + ","
+                                        ) or description.startswith(gene + ";"):
+                                            best_match = entrez_id
+                                            break
+                                        # 如果没有精确匹配，选择第一个
+                                        elif best_match is None:
+                                            best_match = entrez_id
+
+                        if best_match:
+                            resolved.append(best_match)
+            except Exception:
+                # 单个基因解析失败，继续处理其他基因
+                pass
+
+        return resolved
 
     def _get_background_gene_count(self, organism: str) -> int:
         """获取背景基因总数"""

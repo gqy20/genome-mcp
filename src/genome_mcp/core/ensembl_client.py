@@ -47,6 +47,10 @@ class EnsemblClient:
         if not self.session:
             raise RuntimeError("客户端未初始化，请使用 async with 语法")
 
+        # 验证输入参数
+        if not gene_symbol or not gene_symbol.strip():
+            return self._create_gene_not_found_response(gene_symbol or "空字符串")
+
         try:
             # 构建Ensembl API查询
             url = f"{self.base_url}/homology/symbol/homo_sapiens/{gene_symbol}"
@@ -77,7 +81,9 @@ class EnsemblClient:
             async with self.session.get(
                 url, headers=headers, params=params
             ) as response:
-                if response.status != 200:
+                if response.status == 400:
+                    return self._create_gene_not_found_response(gene_symbol)
+                elif response.status != 200:
                     return self._create_error_response(
                         gene_symbol, f"HTTP {response.status}"
                     )
@@ -160,6 +166,34 @@ class EnsemblClient:
             return "medium"
         else:
             return "low"
+
+    def _create_gene_not_found_response(self, gene_symbol: str) -> dict[str, Any]:
+        """创建基因不存在的专用错误响应"""
+        return {
+            "error": f"基因符号 '{gene_symbol}' 在Ensembl数据库中未找到",
+            "query_gene": gene_symbol,
+            "success": False,
+            "data_source": "Ensembl REST API",
+            "error_type": "gene_not_found",
+            "suggestions": [
+                f"检查 '{gene_symbol}' 的拼写是否正确",
+                "尝试使用标准的基因符号格式（如 TP53, BRCA1）",
+                "确认该基因在人类基因组中存在",
+                "在Ensembl网站验证基因符号: https://www.ensembl.org/Homo_sapiens/Search",
+            ],
+            "help_resources": [
+                {
+                    "name": "HGNC基因命名委员会",
+                    "url": "https://www.genenames.org/",
+                    "description": "官方基因符号验证",
+                },
+                {
+                    "name": "Ensembl基因搜索",
+                    "url": f"https://www.ensembl.org/Homo_sapiens/Search?q={gene_symbol}",
+                    "description": "直接搜索该基因",
+                },
+            ],
+        }
 
     def _create_error_response(
         self, gene_symbol: str, error_msg: str
