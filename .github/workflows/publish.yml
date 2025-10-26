@@ -25,11 +25,6 @@ jobs:
     - name: Install uv
       run: pip install uv
 
-    - name: Build package
-      run: |
-        uv build
-        uvx --from . genome-mcp --help
-
     - name: Extract version and changelog
       id: extract_info
       run: |
@@ -46,6 +41,33 @@ jobs:
         echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
         echo "$CHANGELOG" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Build package
+      run: |
+        # 确保版本一致性
+        VERSION=${{ steps.extract_info.outputs.VERSION }}
+        echo "Building version $VERSION"
+
+        # 清理可能存在的缓存
+        rm -rf dist/ build/ *.egg-info 2>/dev/null || true
+
+        # 构建包
+        uv build
+
+        # 验证构建的版本
+        ls -la dist/
+
+        # 检查构建的包版本是否正确
+        if echo dist/* | grep -q "$VERSION"; then
+          echo "✅ 构建版本正确: $VERSION"
+        else
+          echo "❌ 构建版本错误，期望 $VERSION"
+          ls -la dist/
+          exit 1
+        fi
+
+        # 验证包可以安装
+        uvx --from . genome-mcp --help
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
