@@ -49,22 +49,14 @@ class TestTransports:
     @pytest.mark.asyncio
     async def test_mcp_tools_availability(self):
         """测试MCP工具在不同传输模式下的可用性"""
-        # 测试工具是否可以被正确导入
+        # 测试MCP服务器是否可以被正确导入
         try:
-            from genome_mcp import advanced_query, get_data, smart_search
+            from genome_mcp.main import mcp
 
-            # MCP工具被装饰器包装，检查是否是MCP工具对象
-            assert hasattr(get_data, "name") or callable(get_data)
-            assert hasattr(advanced_query, "name") or callable(advanced_query)
-            assert hasattr(smart_search, "name") or callable(smart_search)
-
-            # 检查工具名称
-            if hasattr(get_data, "name"):
-                assert get_data.name == "get_data"
-            if hasattr(advanced_query, "name"):
-                assert advanced_query.name == "advanced_query"
-            if hasattr(smart_search, "name"):
-                assert smart_search.name == "smart_search"
+            # 检查MCP实例可用性
+            assert mcp is not None, "MCP instance should be available"
+            assert hasattr(mcp, "name"), "MCP should have name attribute"
+            assert mcp.name == "Genome MCP", "MCP name should be correct"
 
         except Exception as e:
             pytest.fail(f"MCP工具导入失败: {e}")

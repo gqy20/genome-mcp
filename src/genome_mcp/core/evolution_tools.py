@@ -112,14 +112,28 @@ def _build_presence_absence_matrix(
     for gene_symbol, gene_result in results.items():
         gene_row = {}
         orthologs_data = gene_result.get("result", {}).get("orthologs", [])
-        present_species = {
-            ortholog.get("organism_name", "").lower() for ortholog in orthologs_data
-        }
+        present_species = set()
+
+        # 标准化物种名称
+        for ortholog in orthologs_data:
+            organism_name = ortholog.get("organism_name", "").lower()
+            # 标准化物种名称（移除下划线，转换为小写）
+            normalized_name = organism_name.replace("_", " ")
+            present_species.add(normalized_name)
 
         for species in species_set:
             species_lower = species.lower()
+            # 检查各种可能的物种名称格式
+            species_variants = [
+                species_lower,
+                species_lower.replace(" ", "_"),
+                species_lower.replace(" ", ""),
+            ]
+
             gene_row[species] = any(
-                species_lower in present.lower() for present in present_species
+                variant in present_species
+                or any(variant in present for present in present_species)
+                for variant in species_variants
             )
 
         matrix[gene_symbol] = gene_row
@@ -219,6 +233,28 @@ async def analyze_gene_evolution(
 
         result = await query_executor.execute(parsed)
 
+        # 检查查询结果
+        if not result.get("success") and result.get("error"):
+            return {
+                "error": "同源基因查询服务不可用",
+                "gene_symbol": gene_symbol,
+                "status": "service_unavailable",
+                "message": "Ensembl API服务不可用，无法进行同源基因分析",
+                "suggestions": ["稍后重试", "检查网络连接", "确认基因符号正确"],
+                "alternative_resources": [
+                    {
+                        "name": "Ensembl Web界面",
+                        "url": "https://www.ensembl.org/Homo_sapiens/Search",
+                        "description": "在Ensembl网站手动搜索基因",
+                    },
+                    {
+                        "name": "NCBI Gene",
+                        "url": "https://www.ncbi.nlm.nih.gov/gene",
+                        "description": "NCBI基因数据库",
+                    },
+                ],
+            }
+
         # 添加进化分析信息
         evolution_analysis = {
             "gene_symbol": gene_symbol,
@@ -235,7 +271,21 @@ async def analyze_gene_evolution(
         return result
 
     except Exception as e:
-        return {"error": str(e), "gene_symbol": gene_symbol}
+        return {
+            "error": str(e),
+            "gene_symbol": gene_symbol,
+            "error_type": "gene_evolution_error",
+            "suggestions": ["检查基因符号是否正确", "确认网络连接正常", "稍后重试"],
+            "troubleshooting": {
+                "target_species": target_species,
+                "analysis_level": analysis_level,
+                "possible_causes": [
+                    "基因符号不存在",
+                    "Ensembl API不可用",
+                    "网络连接问题",
+                ],
+            },
+        }
 
 
 async def build_phylogenetic_profile(
@@ -283,6 +333,7 @@ async def build_phylogenetic_profile(
     try:
         # 批量分析基因
         results = {}
+        service_unavailable_count = 0
 
         for gene_symbol in gene_symbols:
             # 分析每个基因的同源关系
@@ -292,7 +343,37 @@ async def build_phylogenetic_profile(
                 include_sequence_info=include_domain_info,
                 query_executor=query_executor,
             )
+
+            # 检查服务状态
+            if (
+                gene_result.get("error")
+                and gene_result.get("status") == "service_unavailable"
+            ):
+                service_unavailable_count += 1
+
             results[gene_symbol] = gene_result
+
+        # 如果所有基因都查询失败，返回服务不可用
+        if service_unavailable_count == len(gene_symbols):
+            return {
+                "error": "系统发育分析服务不可用",
+                "gene_symbols": gene_symbols,
+                "status": "service_unavailable",
+                "message": "Ensembl API服务不可用，无法构建系统发育图谱",
+                "suggestions": ["稍后重试", "检查网络连接", "确认基因符号正确"],
+                "alternative_resources": [
+                    {
+                        "name": "Ensembl Web界面",
+                        "url": "https://www.ensembl.org/Homo_sapiens/Search",
+                        "description": "在Ensembl网站手动搜索基因",
+                    },
+                    {
+                        "name": "NCBI Gene",
+                        "url": "https://www.ncbi.nlm.nih.gov/gene",
+                        "description": "NCBI基因数据库",
+                    },
+                ],
+            }
 
         # 构建存在/缺失矩阵
         presence_matrix = _build_presence_absence_matrix(results, species_set)
@@ -309,6 +390,8 @@ async def build_phylogenetic_profile(
             "summary": {
                 "total_genes": len(gene_symbols),
                 "total_species": len(species_set),
+                "successful_queries": len(gene_symbols) - service_unavailable_count,
+                "failed_queries": service_unavailable_count,
                 "conservation_patterns": _identify_conservation_patterns(
                     presence_matrix
                 ),
@@ -316,4 +399,22 @@ async def build_phylogenetic_profile(
         }
 
     except Exception as e:
-        return {"error": str(e), "gene_symbols": gene_symbols}
+        return {
+            "error": str(e),
+            "gene_symbols": gene_symbols,
+            "error_type": "phylogenetic_profile_error",
+            "suggestions": [
+                "检查基因符号列表是否正确",
+                "确认物种列表格式正确",
+                "减少基因数量后重试",
+            ],
+            "troubleshooting": {
+                "gene_count": len(gene_symbols),
+                "species_count": len(species_set) if species_set else 0,
+                "possible_causes": [
+                    "某些基因符号不存在",
+                    "网络连接问题",
+                    "Ensembl API限制",
+                ],
+            },
+        }

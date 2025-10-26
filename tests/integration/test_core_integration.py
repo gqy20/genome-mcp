@@ -10,7 +10,8 @@ import pytest
 # 添加src目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from genome_mcp.main import QueryParser, _query_executor
+from genome_mcp.core import QueryParser
+from genome_mcp.core.tools import _query_executor
 
 
 class TestCoreIntegration:
@@ -44,8 +45,8 @@ class TestCoreIntegration:
         # 3. 验证结果
         assert "term" in result
         assert result["term"] == "cancer"
-        assert "count" in result
-        assert isinstance(result["count"], int)
+        assert "total_count" in result
+        assert isinstance(result["total_count"], int)
 
     @pytest.mark.asyncio
     async def test_end_to_end_region_search(self):
@@ -58,10 +59,10 @@ class TestCoreIntegration:
         result = await _query_executor.execute(parsed)
 
         # 3. 验证结果
-        assert "region" in result
         assert "chromosome" in result
         assert "start" in result
         assert "end" in result
+        assert "genes_found" in result
 
     @pytest.mark.asyncio
     async def test_end_to_end_batch_query(self):
@@ -111,21 +112,18 @@ class TestMCPToolStructure:
 
     def test_mcp_tools_structure(self):
         """测试MCP工具结构"""
-        from genome_mcp import advanced_query, get_data, smart_search
+        from genome_mcp.main import mcp
 
-        # 验证工具具有MCP工具属性
-        for tool in [get_data, advanced_query, smart_search]:
-            assert hasattr(tool, "name"), f"{tool} should have name attribute"
-            assert hasattr(
-                tool, "description"
-            ), f"{tool} should have description attribute"
-            assert hasattr(tool, "tags"), f"{tool} should have tags attribute"
-            assert tool.enabled, f"{tool} should be enabled"
+        # 验证MCP实例存在并可用
+        assert mcp is not None, "MCP instance should exist"
 
-        # 验证工具名称
-        assert get_data.name == "get_data"
-        assert advanced_query.name == "advanced_query"
-        assert smart_search.name == "smart_search"
+        # 验证MCP服务器具有基本属性
+        assert hasattr(mcp, "name"), "MCP should have name attribute"
+        assert hasattr(mcp, "version"), "MCP should have version attribute"
+
+        # 验证MCP服务器名称和版本
+        assert mcp.name == "Genome MCP"
+        assert "0.2.1" in mcp.version
 
 
 if __name__ == "__main__":

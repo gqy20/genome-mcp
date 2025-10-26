@@ -23,18 +23,38 @@ def _format_simple_result(result: dict[str, Any]) -> dict[str, Any]:
     if "error" in result:
         return result
 
+    # 处理批量查询结果
+    if "batch_size" in result and "results" in result:
+        successful_count = len(
+            [r for r in result["results"].values() if "error" not in r]
+        )
+        filtered_results = {
+            k: v for k, v in result["results"].items() if "error" not in v
+        }
+
+        return {
+            "batch_size": result["batch_size"],
+            "successful_count": successful_count,
+            "results": filtered_results,
+        }
+
     # 根据查询类型简化结果
     if result.get("source") == "cache":
         return {"gene_id": result["gene_id"], "data": result["data"]}
 
     if result.get("source") == "ncbi":
         gene_data = result.get("data", {})
+        summary = gene_data.get("summary", "")
+        # 截断长摘要
+        if len(summary) > 200:
+            summary = summary[:200] + "..."
+
         return {
             "gene_id": result.get("gene_id"),
             "name": gene_data.get("name", ""),
             "description": gene_data.get("description", ""),
             "chromosome": gene_data.get("chromosome", ""),
-            "summary": gene_data.get("summary", ""),
+            "summary": summary,
         }
 
     if result.get("source") == "integrated":
@@ -171,7 +191,22 @@ def create_mcp_tools(mcp: FastMCP) -> None:
                 return result
 
         except Exception as e:
-            return {"error": str(e), "query": query, "data_type": data_type}
+            return {
+                "error": str(e),
+                "query": query,
+                "data_type": data_type,
+                "error_type": "execution_error",
+                "suggestions": ["检查查询格式是否正确", "确认网络连接正常", "稍后重试"],
+                "troubleshooting": {
+                    "query_type": query_type,
+                    "data_type": data_type,
+                    "possible_causes": [
+                        "网络连接问题",
+                        "API服务不可用",
+                        "查询参数错误",
+                    ],
+                },
+            }
 
     @mcp.tool()
     async def advanced_query(
@@ -278,13 +313,11 @@ def create_mcp_tools(mcp: FastMCP) -> None:
             else:
                 query_type = "auto"
 
-            # 执行查询
-            result = await get_data(
-                query=query,
-                query_type=query_type,
-                max_results=max_results,
-                format="detailed",
-            )
+            # 解析查询意图
+            parsed = QueryParser.parse(query, query_type)
+
+            # 执行查询（直接使用查询执行器，避免MCP工具间调用）
+            result = await _query_executor.execute(parsed, max_results=max_results)
 
             # 添加智能解析信息
             result["smart_search_info"] = {
@@ -297,7 +330,26 @@ def create_mcp_tools(mcp: FastMCP) -> None:
             return result
 
         except Exception as e:
-            return {"error": str(e), "description": description}
+            return {
+                "error": str(e),
+                "description": description,
+                "context": context,
+                "error_type": "smart_search_error",
+                "suggestions": [
+                    "检查描述是否清晰明确",
+                    "尝试使用不同的关键词",
+                    "确认上下文参数是否合适",
+                ],
+                "troubleshooting": {
+                    "search_context": context,
+                    "description_length": len(description),
+                    "possible_causes": [
+                        "查询描述过于复杂",
+                        "网络连接问题",
+                        "API服务限制",
+                    ],
+                },
+            }
 
     @mcp.tool()
     async def analyze_gene_evolution_tool(
@@ -447,4 +499,19 @@ def create_mcp_tools(mcp: FastMCP) -> None:
                 "error": f"KEGG pathway enrichment analysis failed: {str(e)}",
                 "query_genes": gene_list,
                 "organism": organism,
+                "error_type": "pathway_enrichment_error",
+                "suggestions": [
+                    "检查基因列表格式是否正确",
+                    "确认生物体代码是否支持",
+                    "稍后重试",
+                ],
+                "troubleshooting": {
+                    "gene_count": len(gene_list),
+                    "organism_code": organism,
+                    "possible_causes": [
+                        "基因ID格式错误",
+                        "网络连接问题",
+                        "KEGG API不可用",
+                    ],
+                },
             }

@@ -10,7 +10,8 @@ import pytest
 # 添加src目录到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from genome_mcp.main import QueryParser, QueryType, _format_simple_result
+from genome_mcp.core import QueryParser, QueryType
+from genome_mcp.core.tools import _format_simple_result
 
 
 class TestQueryParser:
@@ -87,7 +88,7 @@ class TestFormatResult:
         """测试简单基因结果格式化"""
         result = {
             "gene_id": "TP53",
-            "uid": "7157",
+            "source": "ncbi",
             "data": {
                 "name": "tumor protein p53",
                 "description": "This gene encodes tumor protein p53",
@@ -143,7 +144,11 @@ class TestFormatResult:
     def test_format_result_with_long_summary(self):
         """测试长摘要截断"""
         long_summary = "A" * 300
-        result = {"gene_id": "TP53", "data": {"name": "TP53", "summary": long_summary}}
+        result = {
+            "gene_id": "TP53",
+            "source": "ncbi",
+            "data": {"name": "TP53", "summary": long_summary},
+        }
 
         formatted = _format_simple_result(result)
 

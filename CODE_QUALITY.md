@@ -1,18 +1,94 @@
 # Genome MCP 代码质量标准
 
-## 📋 代码标准化工具配置
+## 📋 现代化Python开发工具链
 
-本项目使用现代化的Python代码质量工具，确保代码质量和一致性。
+本项目完全基于 **uv** 现代化工具链构建，实现了从开发到部署的全流程现代化。
 
-### 🛠️ 已配置的工具
+### 🚀 uv 核心工具链
 
-| 工具 | 版本 | 用途 | 配置文件 |
-|------|------|------|----------|
-| **Black** | 24.10.0 | 代码格式化 | `[tool.black]` |
-| **isort** | 5.13.2 | 导入排序 | `[tool.isort]` |
-| **Ruff** | 0.7.4 | 代码检查/格式化 | `[tool.ruff]` |
-| **pytest** | 8.4.1 | 测试框架 | `[tool.pytest.ini_options]` |
-| **pre-commit** | 4.5.0 | Git hooks | `.pre-commit-config.yaml` |
+**uv** 是本项目的基础设施核心，提供完整的Python开发环境管理：
+
+| 工具 | 用途 | 配置 | 优势 |
+|------|------|------|------|
+| **uv** | 🚀 包管理、虚拟环境、构建 | `pyproject.toml` | **10倍速度**、零配置缓存、依赖锁定 |
+| **uv run** | ⚡ 命令执行器 | 自动配置 | 隔离环境、快速启动 |
+| **uv sync** | 🔄 依赖同步 | `uv.lock` | 可重现构建、快速安装 |
+| **uv build** | 📦 包构建 | `pyproject.toml` | 现代化构建、多格式输出 |
+| **uvx** | 🎯 应用运行器 | 远程执行 | 零安装运行、环境隔离 |
+
+### 🛠️ 完整开发工具链
+
+基于uv的集成开发环境：
+
+| 工具 | 用途 | uv集成方式 |
+|------|------|------------|
+| **pytest** | 🧪 测试框架 | `uv run pytest` |
+| **ruff** | 🔍 代码检查和格式化 | `uv run ruff` |
+| **mypy** | 📝 类型检查 | `uv run mypy` |
+
+> **💡 为什么选择uv工具链？**
+> - 🎯 **统一管理**：单一工具管理包、环境、构建、运行
+> - ⚡ **极速性能**：依赖解析比pip快10-100倍
+> - 🔒 **可靠性**：原子性操作，避免损坏环境
+> - 🌐 **现代化**：专为2024+Python开发设计
+> - 🔄 **CI/CD友好**：可重现构建，适合自动化流程
+
+### 🎯 推荐开发工作流
+
+#### 1. 环境设置（uv方式）
+```bash
+# 克隆项目
+git clone <repository-url>
+cd genome-mcp
+
+# 🚀 使用uv创建虚拟环境并安装所有依赖（包括开发依赖）
+uv sync --dev
+
+# ✅ 完成！环境已准备就绪，无需手动激活
+# uv会自动管理虚拟环境
+```
+
+#### 2. 🎯 日常开发命令（全部通过uv）
+```bash
+# 代码格式化和检查
+uv run ruff check .      # 代码质量检查
+uv run ruff format .     # 代码格式化
+
+# 运行测试
+uv run pytest           # 运行所有测试
+uv run pytest -v        # 详细输出
+uv run pytest --cov     # 带覆盖率报告
+
+# 构建包
+uv build                 # 构建wheel和source包
+
+# 安装本地包进行测试
+uv pip install -e .      # 编辑模式安装
+
+# 运行MCP服务器
+uv run -m genome_mcp     # 启动stdio模式
+uv run -m genome_mcp --port 8080  # 启动HTTP模式
+```
+
+#### 3. 🔧 uv 高级用法
+```bash
+# 添加新依赖
+uv add requests          # 添加生产依赖
+uv add --dev pytest      # 添加开发依赖
+
+# 移除依赖
+uv remove requests
+
+# 更新依赖
+uv sync                  # 重新同步所有依赖
+
+# 查看依赖树
+uv tree                  # 显示依赖关系
+
+# 运行任意命令
+uv run python --version  # 在项目环境中运行Python
+uv run bash              # 在项目环境中启动shell
+```
 
 ### 🎯 代码质量标准
 

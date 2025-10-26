@@ -13,8 +13,8 @@ __version__ = "0.2.1"
 
 # 核心组件导出
 from .core import (
+    EnsemblClient,
     NCBIClient,
-    OrthoDBClient,
     ParsedQuery,
     QueryExecutor,
     QueryParser,
@@ -128,7 +128,7 @@ __all__ = [
     "QueryExecutor",
     "NCBIClient",
     "UniProtClient",
-    "OrthoDBClient",
+    "EnsemblClient",
     "ParsedQuery",
     "QueryType",
     "_query_executor",

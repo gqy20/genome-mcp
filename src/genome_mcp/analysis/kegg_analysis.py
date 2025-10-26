@@ -61,6 +61,15 @@ class KEGGEnrichment:
             富集分析结果
         """
         try:
+            # 检查输入参数
+            if not gene_list:
+                return {
+                    "error": "基因列表为空",
+                    "query_genes": gene_list,
+                    "organism": organism,
+                    "error_type": "validation_error",
+                    "suggestions": ["提供至少一个基因ID", "检查基因ID格式是否正确"],
+                }
             # 1. 获取基因-通路映射
             gene_pathway_mapping = await self._get_gene_pathway_mapping(
                 gene_list, organism

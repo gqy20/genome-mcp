@@ -2,9 +2,11 @@
 """
 API客户端模块 - 包含所有外部API的客户端实现
 
-NCBI, UniProt, OrthoDB, KEGG API客户端
+NCBI, UniProt, KEGG API客户端
+OrthoDB客户端已删除，将被Ensembl客户端替代
 """
 
+import asyncio
 from typing import Any
 
 import aiohttp
@@ -50,7 +52,7 @@ class NCBIClient:
 
         return {
             "term": term,
-            "count": data.get("esearchresult", {}).get("count", 0),
+            "count": int(data.get("esearchresult", {}).get("count", 0)),
             "results": data.get("esearchresult", {}).get("idlist", []),
         }
 
@@ -121,63 +123,86 @@ class UniProtClient:
         self,
         query: str,
         max_results: int = 20,
-        fields: str = "accession,id,protein_name,gene_names,organism_name,sequence,length,go_terms,keywords",
+        fields: str = "accession,id,protein_name,gene_names,organism_name,sequence,length",
         organism: str = "9606",  # Human by default
     ) -> dict[str, Any]:
         """搜索蛋白质"""
-        url = f"{self.BASE_URL}/search"
-        params = {
-            "query": f"{query} AND organism_id:{organism}",
-            "fields": fields,
-            "size": max_results,
-            "format": "json",
-        }
+        try:
+            url = f"{self.BASE_URL}/search"
+            params = {
+                "query": f"{query} AND organism_id:{organism}",
+                "fields": fields,
+                "size": max_results,
+                "format": "json",
+            }
 
-        async with self.session.get(url, params=params) as response:
-            data = await response.json()
+            async with self.session.get(url, params=params) as response:
+                if response.status != 200:
+                    return {
+                        "error": f"UniProt search failed: HTTP {response.status}",
+                        "query": query,
+                        "organism": organism,
+                        "suggestions": [
+                            "检查查询参数是否正确",
+                            "确认生物体ID是否有效",
+                            "稍后重试",
+                        ],
+                    }
 
-        results = data.get("results", [])
-        processed_results = []
+                data = await response.json()
 
-        for protein in results:
-            processed_results.append(
-                {
-                    "accession": protein.get("primaryAccession"),
-                    "id": protein.get("uniProtkbId"),
-                    "protein_name": protein.get("proteinDescription", {})
-                    .get("recommendedName", {})
-                    .get("fullName", {})
-                    .get("value", ""),
-                    "gene_names": [
-                        gene.get("geneName", {}).get("value", "")
-                        for gene in protein.get("genes", [])
-                    ],
-                    "organism": protein.get("organism", {}).get("scientificName", ""),
-                    "sequence": protein.get("sequence", {}).get("value", ""),
-                    "length": protein.get("sequence", {}).get("length", 0),
-                    "go_terms": self._extract_go_terms(
-                        protein.get("uniProtKBCrossReferences", [])
-                    ),
-                    "keywords": [
-                        keyword.get("name", "")
-                        for keyword in protein.get("keywords", [])
-                    ],
-                    "function": self._extract_function(protein.get("comments", [])),
-                    "diseases": self._extract_diseases(protein.get("diseases", [])),
-                    "features": self._extract_features(protein.get("features", [])),
-                }
-            )
+            results = data.get("results", [])
+            processed_results = []
 
-        return {
-            "query": query,
-            "count": len(processed_results),
-            "results": processed_results,
-        }
+            for protein in results:
+                processed_results.append(
+                    {
+                        "accession": protein.get("primaryAccession"),
+                        "id": protein.get("uniProtkbId"),
+                        "protein_name": protein.get("proteinDescription", {})
+                        .get("recommendedName", {})
+                        .get("fullName", {})
+                        .get("value", ""),
+                        "gene_names": [
+                            gene.get("geneName", {}).get("value", "")
+                            for gene in protein.get("genes", [])
+                        ],
+                        "organism": protein.get("organism", {}).get(
+                            "scientificName", ""
+                        ),
+                        "sequence": protein.get("sequence", {}).get("value", ""),
+                        "length": protein.get("sequence", {}).get("length", 0),
+                        "go_terms": self._extract_go_terms(
+                            protein.get("uniProtKBCrossReferences", [])
+                        ),
+                        "keywords": [
+                            keyword.get("name", "")
+                            for keyword in protein.get("keywords", [])
+                        ],
+                        "function": self._extract_function(protein.get("comments", [])),
+                        "diseases": self._extract_diseases(protein.get("diseases", [])),
+                        "features": self._extract_features(protein.get("features", [])),
+                    }
+                )
+
+            return {
+                "query": query,
+                "count": len(processed_results),
+                "results": processed_results,
+            }
+
+        except Exception as e:
+            return {
+                "error": f"UniProt search error: {str(e)}",
+                "query": query,
+                "organism": organism,
+                "suggestions": ["检查网络连接", "稍后重试", "简化查询条件"],
+            }
 
     async def get_protein_by_accession(
         self,
         accession: str,
-        fields: str = "accession,id,protein_name,gene_names,organism_name,sequence,length,go_terms,keywords,diseases,comments,features",
+        fields: str = "accession,protein_name,gene_names,organism_name,sequence,length",
     ) -> dict[str, Any]:
         """通过访问号获取蛋白质详细信息"""
         url = f"{self.BASE_URL}/{accession}"
@@ -305,176 +330,6 @@ class UniProtClient:
         return interactions
 
 
-class OrthoDBClient:
-    """OrthoDB API客户端 - 处理进化生物学数据查询"""
-
-    BASE_URL = "https://www.orthodb.org/api/v1"
-
-    def __init__(self):
-        self.session = None
-
-    async def __aenter__(self):
-        self.session = aiohttp.ClientSession()
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        if self.session:
-            await self.session.close()
-
-    async def search_orthologs(
-        self, gene_id: str, target_species: str = None, limit: int = 50
-    ) -> dict[str, Any]:
-        """搜索同源基因"""
-        try:
-            # 首先获取基因的OrthoDB ID
-            gene_url = f"{self.BASE_URL}/genes"
-            gene_params = {"search": gene_id, "limit": 1}
-
-            async with self.session.get(gene_url, params=gene_params) as response:
-                if response.status != 200:
-                    return {"error": f"Gene search failed: HTTP {response.status}"}
-
-                content_type = response.headers.get("content-type", "")
-                if "text/html" in content_type:
-                    return {
-                        "error": "Gene search failed: HTML response instead of JSON. API may be unavailable."
-                    }
-
-                gene_data = await response.json()
-
-            if not gene_data.get("data"):
-                return {"error": f"Gene not found: {gene_id}"}
-
-            orthodb_id = gene_data["data"][0]["orthodb_id"]
-            organism_id = gene_data["data"][0]["organism_id"]
-
-            # 获取同源基因
-            orthologs_url = f"{self.BASE_URL}/orthologs/{orthodb_id}"
-            orthologs_params = {"limit": limit}
-            if target_species:
-                orthologs_params["target_organisms"] = target_species
-
-            async with self.session.get(
-                orthologs_url, params=orthologs_params
-            ) as response:
-                if response.status != 200:
-                    return {"error": f"Ortholog search failed: HTTP {response.status}"}
-
-                content_type = response.headers.get("content-type", "")
-                if "text/html" in content_type:
-                    return {
-                        "error": "Ortholog search failed: HTML response instead of JSON. API may be unavailable."
-                    }
-
-                orthologs_data = await response.json()
-
-            # 处理结果
-            orthologs = []
-            for ortholog in orthologs_data.get("data", []):
-                orthologs.append(
-                    {
-                        "gene_id": ortholog.get("genes", [{}])[0].get("gene_id", ""),
-                        "orthodb_id": ortholog.get("orthodb_id", ""),
-                        "organism_name": ortholog.get("organism_name", ""),
-                        "organism_id": ortholog.get("organism_id", ""),
-                        "protein_name": ortholog.get("protein_name", ""),
-                        "level": ortholog.get("level", ""),
-                        "support": ortholog.get("support", 0),
-                        "is_type": ortholog.get("is_type", "ortholog"),
-                    }
-                )
-
-            return {
-                "query_gene": {
-                    "gene_id": gene_id,
-                    "orthodb_id": orthodb_id,
-                    "organism_id": organism_id,
-                },
-                "orthologs_count": len(orthologs),
-                "orthologs": orthologs,
-            }
-        except Exception as e:
-            return {"error": f"Ortholog search error: {str(e)}"}
-
-    async def get_orthologs_by_species(
-        self, gene_id: str, species_list: list[str], limit: int = 100
-    ) -> dict[str, Any]:
-        """获取指定物种的同源基因"""
-        # OrthoDB物种ID映射（简化版）
-        species_mapping = {
-            "human": "9606",
-            "mouse": "10090",
-            "rat": "10116",
-            "zebrafish": "7955",
-            "fruit_fly": "7227",
-            "nematode": "6239",
-            "arabidopsis": "3702",
-            "yeast": "4932",
-        }
-
-        target_ids = []
-        for species in species_list:
-            species_name = species.lower().replace(" ", "_")
-            if species_name in species_mapping:
-                target_ids.append(species_mapping[species_name])
-
-        if not target_ids:
-            return {"error": "No valid species found"}
-
-        return await self.search_orthologs(gene_id, ",".join(target_ids), limit)
-
-    async def get_ortholog_groups(
-        self, gene_ids: list[str], level: str = "Eukaryota"
-    ) -> dict[str, Any]:
-        """获取基因群组信息"""
-        groups_url = f"{self.BASE_URL}/groups"
-        groups_params = {"level": level, "genes": ",".join(gene_ids)}
-
-        async with self.session.get(groups_url, params=groups_params) as response:
-            groups_data = await response.json()
-
-        return {
-            "level": level,
-            "groups_count": len(groups_data.get("data", [])),
-            "groups": groups_data.get("data", []),
-        }
-
-    async def get_phylogenetic_levels(self) -> dict[str, Any]:
-        """获取支持的进化层级"""
-        try:
-            levels_url = f"{self.BASE_URL}/levels"
-
-            async with self.session.get(levels_url) as response:
-                if response.status != 200:
-                    return {"error": f"Levels fetch failed: HTTP {response.status}"}
-
-                content_type = response.headers.get("content-type", "")
-                if "text/html" in content_type:
-                    return {
-                        "error": "Levels fetch failed: HTML response instead of JSON. API may be unavailable."
-                    }
-
-                levels_data = await response.json()
-
-            levels = []
-            for level in levels_data.get("data", []):
-                levels.append(
-                    {
-                        "level": level.get("level", ""),
-                        "name": level.get("name", ""),
-                        "taxid": level.get("taxid", ""),
-                        "species_count": level.get("species_count", 0),
-                    }
-                )
-
-            return {
-                "levels_count": len(levels),
-                "levels": levels[:20],  # 返回前20个层级
-            }
-        except Exception as e:
-            return {"error": f"Levels fetch error: {str(e)}"}
-
-
 class KEGGClient:
     """KEGG API客户端 - 通路分析功能"""
 
@@ -482,9 +337,10 @@ class KEGGClient:
 
     def __init__(self):
         self.session = None
+        self.timeout = aiohttp.ClientTimeout(total=30, connect=10)
 
     async def __aenter__(self):
-        self.session = aiohttp.ClientSession()
+        self.session = aiohttp.ClientSession(timeout=self.timeout)
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -499,10 +355,15 @@ class KEGGClient:
             async with self.session.get(url) as response:
                 if response.status != 200:
                     return {
-                        "error": f"Pathway list fetch failed: HTTP {response.status}"
+                        "error": f"Pathway list fetch failed: HTTP {response.status}",
+                        "suggestions": [
+                            "检查生物体代码是否正确（如 hsa, mmu, rno）",
+                            "稍后重试",
+                            "检查网络连接",
+                        ],
                     }
 
-                text = await response.text()
+                text = await response.text(encoding="utf-8")
                 pathways = {}
 
                 for line in text.strip().split("\n"):
@@ -515,13 +376,24 @@ class KEGGClient:
                     "pathway_count": len(pathways),
                     "pathways": pathways,
                 }
+        except asyncio.TimeoutError:
+            return {
+                "error": "KEGG API 请求超时",
+                "suggestions": ["稍后重试", "检查网络连接速度", "减少查询数据量"],
+            }
         except Exception as e:
-            return {"error": f"Pathway list fetch error: {str(e)}"}
+            return {
+                "error": f"Pathway list fetch error: {str(e)}",
+                "suggestions": ["检查网络连接", "稍后重试", "联系技术支持"],
+            }
 
     async def get_gene_pathway_mapping(
         self, gene_list: list[str], organism: str
     ) -> dict[str, Any]:
         """获取基因-通路映射关系"""
+        if not gene_list:
+            return {"error": "基因列表为空", "organism": organism}
+
         gene_str = "+".join(gene_list)
         url = f"{self.BASE_URL}link/pathway/{organism}:{gene_str}"
 
@@ -529,10 +401,17 @@ class KEGGClient:
             async with self.session.get(url) as response:
                 if response.status != 200:
                     return {
-                        "error": f"Gene-pathway mapping fetch failed: HTTP {response.status}"
+                        "error": f"Gene-pathway mapping fetch failed: HTTP {response.status}",
+                        "organism": organism,
+                        "gene_list": gene_list,
+                        "suggestions": [
+                            "检查基因ID格式是否正确",
+                            "确认生物体代码是否支持",
+                            "稍后重试",
+                        ],
                     }
 
-                text = await response.text()
+                text = await response.text(encoding="utf-8")
                 gene_pathways = {}
 
                 for line in text.strip().split("\n"):
@@ -551,8 +430,20 @@ class KEGGClient:
                     "gene_count": len(gene_pathways),
                     "gene_pathways": gene_pathways,
                 }
+        except asyncio.TimeoutError:
+            return {
+                "error": "KEGG基因-通路映射请求超时",
+                "organism": organism,
+                "gene_list": gene_list,
+                "suggestions": ["减少基因列表长度", "稍后重试", "检查网络连接"],
+            }
         except Exception as e:
-            return {"error": f"Gene-pathway mapping fetch error: {str(e)}"}
+            return {
+                "error": f"Gene-pathway mapping fetch error: {str(e)}",
+                "organism": organism,
+                "gene_list": gene_list,
+                "suggestions": ["检查基因ID格式", "检查网络连接", "稍后重试"],
+            }
 
     async def get_pathway_info(self, pathway_id: str) -> dict[str, Any]:
         """获取通路详细信息"""

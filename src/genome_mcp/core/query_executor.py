@@ -8,7 +8,8 @@
 import asyncio
 from typing import Any
 
-from .clients import KEGGClient, NCBIClient, OrthoDBClient, UniProtClient
+from .clients import KEGGClient, NCBIClient, UniProtClient
+from .ensembl_client import EnsemblClient
 from .query_parser import ParsedQuery, QueryType
 
 
@@ -18,7 +19,7 @@ class QueryExecutor:
     def __init__(self):
         self.ncbi_client = NCBIClient()
         self.uniprot_client = UniProtClient()
-        self.orthodb_client = OrthoDBClient()
+        self.ensembl_client = EnsemblClient()
         self.kegg_client = KEGGClient()
 
     async def execute(self, parsed_query: ParsedQuery, **kwargs) -> dict[str, Any]:
@@ -248,56 +249,82 @@ class QueryExecutor:
             return integrated_result
 
     async def _execute_ortholog(self, params: dict[str, Any]) -> dict[str, Any]:
-        """执行同源基因查询"""
+        """执行同源基因查询 - 使用Ensembl API"""
         gene_query = params["gene_query"]
         limit = params.get("limit", 50)
         target_species = params.get("target_species")
 
-        async with self.orthodb_client as orthodb_client:
+        try:
+            # 处理目标物种参数
+            target_species_list = None
             if target_species:
-                # 指定物种查询
-                if isinstance(target_species, list):
-                    result = await orthodb_client.get_orthologs_by_species(
-                        gene_query, target_species, limit
-                    )
-                else:
-                    result = await orthodb_client.search_orthologs(
-                        gene_query, target_species, limit
-                    )
-            else:
-                # 通用同源基因查询
-                result = await orthodb_client.search_orthologs(gene_query, limit=limit)
+                if isinstance(target_species, str):
+                    target_species_list = [target_species]
+                elif isinstance(target_species, list):
+                    target_species_list = target_species
+
+            # 使用EnsemblClient查询
+            async with self.ensembl_client as client:
+                result = await client.search_orthologs(
+                    gene_symbol=gene_query,
+                    target_species=target_species_list,
+                    limit=limit,
+                )
 
             return {
                 "query_type": "ortholog",
                 "gene_query": gene_query,
                 "result": result,
                 "species_targeted": target_species is not None,
+                "data_source": "Ensembl REST API",
+                "success": result.get("success", False),
+            }
+
+        except Exception as e:
+            return {
+                "error": f"同源基因查询失败: {str(e)}",
+                "query_type": "ortholog",
+                "gene_query": gene_query,
+                "suggestions": ["检查基因符号是否正确", "稍后重试", "检查网络连接"],
             }
 
     async def _execute_evolution(self, params: dict[str, Any]) -> dict[str, Any]:
-        """执行进化分析查询"""
+        """执行进化分析查询 - 使用Ensembl API"""
         evolution_query = params["evolution_query"]
         analysis_type = params.get("analysis_type", "comprehensive")
 
-        async with self.orthodb_client as orthodb_client:
-            # 获取进化层级信息
-            levels_result = await orthodb_client.get_phylogenetic_levels()
+        try:
+            # 使用EnsemblClient获取物种信息
+            async with self.ensembl_client as client:
+                # 获取支持物种列表
+                species_result = await client.get_species_list()
 
-            # 基于查询内容进行智能分析
-            analysis_result = {
-                "query": evolution_query,
-                "analysis_type": analysis_type,
-                "available_levels": levels_result["levels"][:10],  # 前10个层级
-                "recommendations": self._generate_evolution_recommendations(
-                    evolution_query
-                ),
-            }
+                # 基于查询内容进行智能分析
+                analysis_result = {
+                    "query": evolution_query,
+                    "analysis_type": analysis_type,
+                    "available_species": species_result.get("species", [])[
+                        :10
+                    ],  # 前10个物种
+                    "recommendations": self._generate_evolution_recommendations(
+                        evolution_query
+                    ),
+                    "data_source": "Ensembl REST API",
+                }
 
             return {
                 "query_type": "evolution",
                 "evolution_query": evolution_query,
                 "result": analysis_result,
+                "data_source": "Ensembl REST API",
+            }
+
+        except Exception as e:
+            return {
+                "error": f"进化分析查询失败: {str(e)}",
+                "query_type": "evolution",
+                "evolution_query": evolution_query,
+                "suggestions": ["检查查询参数是否正确", "稍后重试", "检查网络连接"],
             }
 
     def _generate_evolution_recommendations(self, query: str) -> list[str]:
