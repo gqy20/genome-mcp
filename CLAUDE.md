@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 🧬 项目概述
 
-**Genome MCP v0.2.1** 是一个智能基因组数据服务器，通过MCP协议提供高质量的基因信息查询、同源基因分析和进化研究功能。该项目采用模块化架构，完全基于权威数据库，无模拟数据，科学严谨可靠。
+**Genome MCP v0.2.2** 是一个智能基因组数据服务器，通过MCP协议提供高质量的基因信息查询、同源基因分析和进化研究功能。该项目采用模块化架构，完全基于权威数据库，无模拟数据，科学严谨可靠。
 
 ### 🎯 核心功能
 - **🧬 基因信息查询**: 基于NCBI Gene数据库的准确基因信息
@@ -109,7 +109,7 @@ uv run python -c "print('Hello')"  # 快速执行Python代码
 
 ## 🏗️ 项目架构
 
-### 核心模块结构 (v0.2.1更新)
+### 核心模块结构 (v0.2.2更新)
 ```
 src/genome_mcp/
 ├── __main__.py          # 主入口点
@@ -124,7 +124,7 @@ src/genome_mcp/
     └── evolution_tools.py # 进化分析工具
 ```
 
-### 🔧 v0.2.1 重大架构变更
+### 🔧 v0.2.1 → v0.2.2 重大架构变更
 
 #### Ensembl API完全替换OrthoDB
 - **❌ 删除**: OrthoDBClient（API完全不可用）
@@ -169,7 +169,7 @@ src/genome_mcp/
 3. 如需要新的数据源，创建新的客户端类（参考EnsemblClient模式）
 4. 在 `src/genome_mcp/core/query_executor.py` 中添加执行逻辑
 
-### 添加新的数据源客户端 (v0.2.1最佳实践)
+### 添加新的数据源客户端 (v0.2.1→v0.2.2最佳实践)
 1. **参考EnsemblClient模式**: 创建独立的客户端类文件
 2. **实现异步接口**: 使用`async with`模式管理会话
 3. **错误处理**: 实现透明的错误处理和用户友好的错误信息
@@ -192,7 +192,7 @@ class NewAPIClient:
             await self.session.close()
 ```
 
-### 🧪 测试策略 (v0.2.1)
+### 🧪 测试策略 (v0.2.2)
 - **单元测试**: `tests/unit/` - 测试核心功能模块 (42/42通过 ✅)
 - **集成测试**: `tests/integration/` - 测试完整工作流程 (18/18通过 ✅)
 - **使用pytest框架**: 支持异步测试，现代测试工具
@@ -221,7 +221,7 @@ class NewAPIClient:
 - `GENOME_MCP_LOG_LEVEL`: 控制日志级别（debug/info/warning/error）
 - **推荐开发设置**: `export GENOME_MCP_LOG_LEVEL=debug`
 
-### 📊 数据库和API (v0.2.1更新)
+### 📊 数据库和API (v0.2.2更新)
 - **NCBI E-utilities API**: 基因信息查询
 - **UniProt REST API**: 蛋白质数据查询
 - **🆕 Ensembl REST API**: 同源基因查询（253+ TP53同源基因）
@@ -230,7 +230,7 @@ class NewAPIClient:
 
 ## 🔧 故障排除
 
-### 📊 常见问题 (v0.2.1更新)
+### 📊 常见问题 (v0.2.2更新)
 1. **API可用性**:
    - ✅ Ensembl API: 完全可用
    - ✅ NCBI API: 正常运行
@@ -255,7 +255,7 @@ class NewAPIClient:
 
 ## 📈 项目状态和质量保证
 
-### ✅ 当前状态 (v0.2.1)
+### ✅ 当前状态 (v0.2.2)
 - **测试通过率**: 100% (42/42测试通过)
 - **构建状态**: ✅ uv构建成功
 - **功能完整性**: ✅ 所有核心功能正常
