@@ -43,9 +43,14 @@ class QueryParser:
     def parse(query: str | list[str], query_type: str = "auto") -> ParsedQuery:
         """解析查询意图"""
 
-        # 处理批量查询
+        # 处理批量查询 - 但是对于特殊查询类型，需要特殊处理
         if isinstance(query, list):
-            return QueryParser._parse_batch(query)
+            # 对于通路富集分析，将列表转换为字符串
+            if query_type == "pathway_enrichment":
+                query_str = ",".join(str(item) for item in query)
+                return QueryParser._parse_pathway_enrichment(query_str)
+            else:
+                return QueryParser._parse_batch(query)
 
         query = str(query).strip()
 
@@ -236,12 +241,45 @@ class QueryParser:
         )
 
     @staticmethod
+    def _extract_gene_symbol_from_query(query: str) -> str:
+        """从查询中提取基因符号"""
+        import re
+
+        # 移除常见的查询词汇
+        cleaned_query = query.lower()
+        for word in [
+            "homolog",
+            "homologs",
+            "ortholog",
+            "orthologs",
+            "evolution",
+            "conservation",
+            "across",
+            "species",
+        ]:
+            cleaned_query = cleaned_query.replace(word, " ")
+
+        # 查找可能的基因符号（通常是大写字母加数字）
+        words = cleaned_query.split()
+        for word in words:
+            word = word.upper().strip()
+            # 基因符号模式：大写字母开头，可能包含数字
+            if re.match(r"^[A-Z][A-Z0-9]*$", word) and len(word) >= 2:
+                return word
+
+        # 如果没有找到，返回原始查询的第一个词
+        return query.split()[0].upper() if query.split() else query
+
+    @staticmethod
     def _parse_ortholog(query: str) -> ParsedQuery:
         """解析同源基因查询"""
+        # 从查询中提取基因符号
+        gene_symbol = QueryParser._extract_gene_symbol_from_query(query)
+
         return ParsedQuery(
             type=QueryType.ORTHOLOG,
             query=query,
-            params={"gene_query": query, "limit": 50, "target_species": None},
+            params={"gene_query": gene_symbol, "limit": 50, "target_species": None},
         )
 
     @staticmethod
@@ -256,13 +294,18 @@ class QueryParser:
     @staticmethod
     def _parse_pathway_enrichment(query: str) -> ParsedQuery:
         """解析通路富集分析查询"""
+        # 将查询字符串解析为基因列表
+        gene_list = [gene.strip() for gene in query.split(",") if gene.strip()]
+
         return ParsedQuery(
             type=QueryType.PATHWAY_ENRICHMENT,
             query=query,
             params={
                 "pathway_query": query,
+                "gene_list": gene_list,  # 添加解析后的基因列表
                 "organism": "hsa",  # 默认人类
                 "pvalue_threshold": 0.05,
+                "min_gene_count": 2,  # 添加默认最小基因数量
             },
         )
 

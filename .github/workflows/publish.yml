@@ -1,12 +1,25 @@
-name: Publish Python Package and Create Release
+name: Version Management and Release
 
 on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options: [patch, minor, major]
+      auto_release:
+        description: 'Auto create release and publish to PyPI'
+        required: false
+        default: true
+        type: boolean
 
 jobs:
-  publish:
+  release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -16,6 +29,19 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Determine trigger source
+      id: trigger
+      run: |
+        if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == refs/tags/* ]]; then
+          echo "source=tag" >> $GITHUB_OUTPUT
+          echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          echo "auto_release=true" >> $GITHUB_OUTPUT
+        else
+          echo "source=manual" >> $GITHUB_OUTPUT
+          echo "auto_release=${{ github.event.inputs.auto_release }}" >> $GITHUB_OUTPUT
+        fi
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -25,54 +51,67 @@ jobs:
     - name: Install uv
       run: pip install uv
 
+    - name: Version Management (Manual Trigger Only)
+      if: steps.trigger.outputs.source == 'manual'
+      run: |
+        echo "🔄 手动触发 - 进行版本管理..."
+        uv version --bump ${{ github.event.inputs.bump_type }}
+        uv run python scripts/sync_version.py
+
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add -A
+        git commit -m "chore: 升级版本到 v$(uv version --short)"
+
+        VERSION=$(uv version --short)
+        git tag -a "v$VERSION" -m "Release v$VERSION"
+        git push origin main
+        git push origin "v$VERSION"
+
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+    - name: Build package
+      run: |
+        echo "📦 构建Python包..."
+        uv build
+        uvx --from . genome-mcp --help
+
     - name: Extract version and changelog
       id: extract_info
       run: |
-        # Extract version from tag
-        VERSION=${GITHUB_REF#refs/tags/v}
+        # Extract version
+        if [[ "${{ steps.trigger.outputs.source }}" == "tag" ]]; then
+          VERSION=${GITHUB_REF#refs/tags/v}
+        else
+          VERSION=$(uv version --short)
+        fi
         echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
         # Get the commit message for this tag
         COMMIT_MSG=$(git log -1 --pretty=format:'%s' ${{ github.sha }})
         echo "COMMIT_MSG=$COMMIT_MSG" >> $GITHUB_OUTPUT
 
-        # Extract changelog from git tag annotation
-        CHANGELOG=$(git tag -l v$VERSION -n --format='%(contents)')
+        # Extract changelog from git tag annotation or generate from commits
+        if git tag -l v$VERSION -n --format='%(contents)' | grep -q .; then
+          CHANGELOG=$(git tag -l v$VERSION -n --format='%(contents)')
+        else
+          # Generate changelog from commits since last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [[ -n "$LAST_TAG" ]]; then
+            CHANGELOG=$(git log $LAST_TAG..HEAD --pretty=format:"- %s (%h, %an)")
+          else
+            CHANGELOG=$(git log --pretty=format:"- %s (%h, %an)" -10)
+          fi
+        fi
         echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
         echo "$CHANGELOG" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
 
-    - name: Build package
-      run: |
-        # 确保版本一致性
-        VERSION=${{ steps.extract_info.outputs.VERSION }}
-        echo "Building version $VERSION"
-
-        # 清理可能存在的缓存
-        rm -rf dist/ build/ *.egg-info 2>/dev/null || true
-
-        # 构建包
-        uv build
-
-        # 验证构建的版本
-        ls -la dist/
-
-        # 检查构建的包版本是否正确
-        if echo dist/* | grep -q "$VERSION"; then
-          echo "✅ 构建版本正确: $VERSION"
-        else
-          echo "❌ 构建版本错误，期望 $VERSION"
-          ls -la dist/
-          exit 1
-        fi
-
-        # 验证包可以安装
-        uvx --from . genome-mcp --help
-
     - name: Create GitHub Release
+      if: steps.trigger.outputs.auto_release == 'true'
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: ${{ github.ref }}
+        tag_name: v${{ steps.extract_info.outputs.VERSION }}
         name: Release v${{ steps.extract_info.outputs.VERSION }}
         body: |
           ## Version ${{ steps.extract_info.outputs.VERSION }}
@@ -117,9 +156,18 @@ jobs:
           dist/*
 
     - name: Publish to PyPI
+      if: steps.trigger.outputs.auto_release == 'true'
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
       run: |
+        echo "🚀 发布到PyPI..."
         pip install twine
         twine upload dist/*
+
+    - name: Summary
+      run: |
+        echo "✅ 版本管理流程完成!"
+        echo "📋 版本: ${{ steps.extract_info.outputs.VERSION }}"
+        echo "🔄 触发方式: ${{ steps.trigger.outputs.source }}"
+        echo "🚀 发布状态: ${{ steps.trigger.outputs.auto_release == 'true' && '已发布' || '仅版本管理' }}"

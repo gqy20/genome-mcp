@@ -1,0 +1,34 @@
+name: FastMCP Compliance Check
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  fastmcp-compliance:
+    runs-on: ubuntu-latest
+    name: FastMCP规范合规性检查
+
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+
+    - name: 设置Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: 安装uv
+      run: pip install uv
+
+    - name: 安装依赖
+      run: |
+        uv sync --dev
+
+    - name: 运行FastMCP合规性检查
+      run: |
+        echo "🚀 运行FastMCP合规性检查..."
+        uv run python scripts/check-compliance.py

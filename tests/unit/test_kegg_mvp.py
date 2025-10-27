@@ -143,9 +143,8 @@ class TestKEGGMVP:
         with pytest.raises(ValidationError):
             validate_gene_list([])
 
-        # 测试单个基因
-        with pytest.raises(ValidationError):
-            validate_gene_list(["TP53"])
+        # 测试单个基因 - 现在允许单基因分析
+        validate_gene_list(["TP53"])  # 应该不抛出异常
 
         # 测试无效基因ID
         with pytest.raises(ValidationError):

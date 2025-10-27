@@ -4,6 +4,7 @@ Ensembl REST API客户端 - OrthoDB的完全替代品
 专门针对Ensembl API优化，提供同源基因查询功能
 """
 
+import json
 from typing import Any
 
 import aiohttp
@@ -52,35 +53,24 @@ class EnsemblClient:
             return self._create_gene_not_found_response(gene_symbol or "空字符串")
 
         try:
-            # 构建Ensembl API查询
+            # 构建Ensembl API查询 - 修复URL和参数
             url = f"{self.base_url}/homology/symbol/homo_sapiens/{gene_symbol}"
             headers = {"Content-Type": "application/json"}
 
-            params = {"format": format_type, "type": "orthologues"}
+            # 修复参数格式 - Ensembl API需要分号分隔的参数
+            query_params = [f"format={format_type}", "type=orthologues"]
 
-            if target_species:
-                # 标准化物种名称为Ensembl格式
-                normalized_species = []
-                for species in target_species:
-                    # 将常见名称转换为学名格式
-                    species_lower = species.lower()
-                    if species_lower in ["human", "homo sapiens"]:
-                        normalized_species.append("homo_sapiens")
-                    elif species_lower in ["mouse", "mus musculus"]:
-                        normalized_species.append("mus_musculus")
-                    elif species_lower in ["rat", "rattus norvegicus"]:
-                        normalized_species.append("rattus_norvegicus")
-                    elif species_lower in ["zebrafish", "danio rerio"]:
-                        normalized_species.append("danio_rerio")
-                    else:
-                        # 如果已经是学名格式，直接使用
-                        normalized_species.append(species.lower().replace(" ", "_"))
+            # 注意：Ensembl API不支持target_species参数，需要在返回结果中过滤
+            # 移除target_species参数，改为后处理过滤
 
-                params["target_species"] = ",".join(normalized_species)
+            # 构建完整URL包含参数
+            if query_params:
+                url += "?" + ";".join(query_params)
 
-            async with self.session.get(
-                url, headers=headers, params=params
-            ) as response:
+            # 存储目标物种用于后续过滤
+            self._target_species = target_species
+
+            async with self.session.get(url, headers=headers) as response:
                 if response.status == 400:
                     return self._create_gene_not_found_response(gene_symbol)
                 elif response.status != 200:
@@ -93,6 +83,8 @@ class EnsemblClient:
 
         except aiohttp.ClientError as e:
             return self._create_error_response(gene_symbol, f"网络错误: {str(e)}")
+        except json.JSONDecodeError as e:
+            return self._create_error_response(gene_symbol, f"JSON解析错误: {str(e)}")
         except Exception as e:
             return self._create_error_response(gene_symbol, f"系统错误: {str(e)}")
 
@@ -101,6 +93,9 @@ class EnsemblClient:
     ) -> dict[str, Any]:
         """处理Ensembl同源基因数据"""
         orthologs = []
+
+        # 获取存储的目标物种
+        target_species = getattr(self, "_target_species", target_species)
 
         if (
             data.get("data")
@@ -115,9 +110,20 @@ class EnsemblClient:
                 # 如果指定了目标物种，进行过滤
                 if target_species:
                     # 标准化物种名称格式进行比较
-                    target_species_clean = {
-                        s.lower().replace(" ", "_") for s in target_species
-                    }
+                    target_species_clean = set()
+                    for species in target_species:
+                        species_lower = species.lower()
+                        if species_lower in ["human", "homo sapiens"]:
+                            target_species_clean.add("homo_sapiens")
+                        elif species_lower in ["mouse", "mus musculus"]:
+                            target_species_clean.add("mus_musculus")
+                        elif species_lower in ["rat", "rattus norvegicus"]:
+                            target_species_clean.add("rattus_norvegicus")
+                        elif species_lower in ["zebrafish", "danio rerio"]:
+                            target_species_clean.add("danio_rerio")
+                        else:
+                            target_species_clean.add(species_lower.replace(" ", "_"))
+
                     ortholog_species = (
                         target.get("species", "").lower().replace(" ", "_")
                     )
