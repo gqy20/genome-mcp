@@ -123,7 +123,7 @@ class TestMCPToolStructure:
 
         # 验证MCP服务器名称和版本
         assert mcp.name == "Genome MCP"
-        assert "0.2.2" in mcp.version
+        assert "0.2.4" in mcp.version
 
 
 if __name__ == "__main__":

@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """
-Example usage of Genome MCP FastMCP implementation
+Example usage of Genome MCP FastMCP Implementation (Modern Version)
+
+This example demonstrates how to use the modern MCP tools instead of
+the deprecated compatibility functions.
 """
 
 import asyncio
@@ -12,40 +15,66 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 
 async def example_usage():
-    """Example usage of Genome MCP tools"""
-    print("Genome MCP FastMCP Implementation Example")
+    """Example usage of modern Genome MCP tools"""
+    print("Genome MCP FastMCP Implementation Example (Modern)")
     print("=" * 50)
 
     try:
-        # Import tools
-        from genome_mcp.main import batch_gene_info, get_gene_info, search_genes
+        # Import modern core components
+        from genome_mcp.core import QueryExecutor, QueryParser
 
-        # Example 1: Search for genes
+        # Initialize components
+        parser = QueryParser()
+        executor = QueryExecutor()
+
+        # Example 1: Search for genes (using get_data tool)
         print("1. Searching for genes related to 'cancer'...")
-        search_result = await search_genes.fn(term="cancer", max_results=3)
-        print(f"   Found {len(search_result['results'])} genes:")
-        for gene in search_result["results"]:
-            print(f"   - {gene['gene_id']}: {gene['description'][:60]}...")
+        search_query = parser.parse("cancer", query_type="search")
+        search_result = await executor.execute(search_query)
+        print(f"   Found {search_result.get('total_count', 0)} genes:")
+        if "results" in search_result:
+            for gene in search_result["results"][:3]:
+                gene_id = gene.get("gene_id", "Unknown")
+                description = gene.get("description", "No description")
+                print(f"   - {gene_id}: {description[:60]}...")
 
         # Example 2: Get detailed information about TP53
         print("\n2. Getting detailed information about TP53...")
-        tp53_info = await get_gene_info.fn(gene_id="TP53")
-        print(f"   Gene: {tp53_info['info']['name']}")
-        print(f"   Chromosome: {tp53_info['info']['chromosome']}")
-        print(f"   Description: {tp53_info['info']['description'][:100]}...")
+        gene_query = parser.parse("TP53", query_type="info")
+        tp53_result = await executor.execute(gene_query)
+        if "gene_symbol" in tp53_result:
+            print(f"   Gene: {tp53_result['gene_symbol']}")
+        if "chromosome" in tp53_result:
+            print(f"   Chromosome: {tp53_result['chromosome']}")
+        if "description" in tp53_result:
+            print(f"   Description: {tp53_result['description'][:100]}...")
 
         # Example 3: Batch query multiple genes
         print("\n3. Batch querying multiple genes...")
         gene_list = ["TP53", "EGFR", "BRCA1"]
-        batch_result = await batch_gene_info.fn(gene_ids=gene_list)
-        print(f"   Queried {batch_result['total_genes']} genes")
-        print(f"   Successful: {batch_result['successful']}")
-        print(f"   Failed: {batch_result['failed']}")
+        batch_query = parser.parse(gene_list, query_type="batch")
+        batch_result = await executor.execute(batch_query)
+        print(f"   Queried {batch_result.get('batch_size', len(gene_list))} genes")
+        print(f"   Results: {len(batch_result.get('results', []))} successful")
+
+        # Example 4: Region search (bonus example)
+        print("\n4. Searching genes in a genomic region...")
+        region_query = parser.parse("chr17:7565097-7590856", query_type="region")
+        region_result = await executor.execute(region_query)
+        if "genes_found" in region_result:
+            print(f"   Found {len(region_result['genes_found'])} genes in the region")
 
         print("\n✅ All examples completed successfully!")
+        print(
+            "\n💡 Note: This example uses the modern QueryParser + QueryExecutor pattern"
+        )
+        print("   instead of the deprecated compatibility functions.")
 
     except Exception as e:
         print(f"❌ Error in example usage: {e}")
+        import traceback
+
+        traceback.print_exc()
         return False
 
     return True

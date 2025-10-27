@@ -220,6 +220,17 @@ async def analyze_gene_evolution(
         query_executor = QueryExecutor()
 
     try:
+        # 验证输入参数
+        if not gene_symbol or not gene_symbol.strip():
+            return {
+                "error": "基因符号不能为空",
+                "gene_symbol": gene_symbol,
+                "error_type": "validation_error",
+                "suggestions": ["提供有效的基因符号，如 TP53, BRCA1"],
+            }
+
+        gene_symbol = gene_symbol.strip()
+
         # 构建查询
         if target_species:
             query = f"{gene_symbol} across species {' '.join(target_species)}"
@@ -230,29 +241,56 @@ async def analyze_gene_evolution(
         parsed = QueryParser._parse_ortholog(query)
         if target_species:
             parsed.params["target_species"] = target_species
+        parsed.params["gene_symbol"] = gene_symbol
 
         result = await query_executor.execute(parsed)
 
         # 检查查询结果
         if not result.get("success") and result.get("error"):
             return {
-                "error": "同源基因查询服务不可用",
+                "error": f"同源基因查询失败: {result.get('error', '未知错误')}",
                 "gene_symbol": gene_symbol,
                 "status": "service_unavailable",
-                "message": "Ensembl API服务不可用，无法进行同源基因分析",
-                "suggestions": ["稍后重试", "检查网络连接", "确认基因符号正确"],
+                "message": "Ensembl API服务暂时不可用，无法进行同源基因分析",
+                "suggestions": [
+                    "稍后重试",
+                    "检查网络连接",
+                    "确认基因符号正确",
+                    "尝试使用其他基因符号（如大写格式）",
+                ],
                 "alternative_resources": [
                     {
                         "name": "Ensembl Web界面",
-                        "url": "https://www.ensembl.org/Homo_sapiens/Search",
+                        "url": f"https://www.ensembl.org/Homo_sapiens/Search?q={gene_symbol}",
                         "description": "在Ensembl网站手动搜索基因",
                     },
                     {
                         "name": "NCBI Gene",
-                        "url": "https://www.ncbi.nlm.nih.gov/gene",
+                        "url": f"https://www.ncbi.nlm.nih.gov/gene?term={gene_symbol}",
                         "description": "NCBI基因数据库",
                     },
                 ],
+                "debug_info": {
+                    "parsed_query": query,
+                    "query_params": parsed.params,
+                    "original_error": result.get("error"),
+                },
+            }
+
+        # 检查是否有同源基因数据
+        orthologs = result.get("result", {}).get("orthologs", [])
+        if not orthologs:
+            return {
+                "error": f"未找到基因 '{gene_symbol}' 的同源基因",
+                "gene_symbol": gene_symbol,
+                "status": "no_orthologs_found",
+                "message": "该基因可能不存在于Ensembl数据库中，或者没有同源基因记录",
+                "suggestions": [
+                    "检查基因符号拼写是否正确",
+                    "尝试使用该基因的其他名称或别名",
+                    "确认该基因在参考基因组中存在",
+                ],
+                "query_result": result,
             }
 
         # 添加进化分析信息
@@ -264,18 +302,35 @@ async def analyze_gene_evolution(
             "evolutionary_insights": _generate_evolutionary_insights(result),
             "conservation_score": _calculate_conservation_score(result),
             "phylogenetic_distribution": _analyze_phylogenetic_distribution(result),
+            "data_quality": {
+                "orthologs_count": len(orthologs),
+                "species_count": len({o.get("organism_name") for o in orthologs}),
+                "high_confidence_count": len(
+                    [o for o in orthologs if o.get("confidence") == "high"]
+                ),
+            },
         }
 
         result["evolution_analysis"] = evolution_analysis
+        result["success"] = True  # 明确标记成功
 
         return result
 
     except Exception as e:
+        import traceback
+
+        error_trace = traceback.format_exc()
+
         return {
-            "error": str(e),
+            "error": f"基因进化分析异常: {str(e)}",
             "gene_symbol": gene_symbol,
             "error_type": "gene_evolution_error",
-            "suggestions": ["检查基因符号是否正确", "确认网络连接正常", "稍后重试"],
+            "suggestions": [
+                "检查基因符号是否正确",
+                "确认网络连接正常",
+                "稍后重试",
+                "联系技术支持",
+            ],
             "troubleshooting": {
                 "target_species": target_species,
                 "analysis_level": analysis_level,
@@ -283,7 +338,9 @@ async def analyze_gene_evolution(
                     "基因符号不存在",
                     "Ensembl API不可用",
                     "网络连接问题",
+                    "服务器内部错误",
                 ],
+                "error_trace": error_trace,
             },
         }
 

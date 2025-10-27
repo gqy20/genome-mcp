@@ -25,8 +25,9 @@ def validate_gene_list(gene_list: list[str]) -> None:
     if not gene_list:
         raise ValidationError("基因列表不能为空")
 
-    if len(gene_list) == 1:
-        raise ValidationError("基因列表需要至少包含2个基因进行富集分析")
+    # 注释掉强制要求2个基因的限制，允许单基因分析
+    # if len(gene_list) == 1:
+    #     raise ValidationError("基因列表需要至少包含2个基因进行富集分析")
 
     for gene in gene_list:
         if not gene or not gene.strip():

@@ -9,7 +9,7 @@ Genome MCP - 优化版本：智能基因组数据访问
 - 进化生物学数据分析
 """
 
-__version__ = "0.2.3"
+__version__ = "0.2.4"
 
 # 核心组件导出
 from .core import (

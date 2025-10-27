@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "genome-mcp"
-version = "0.2.3"
+version = "0.2.4"
 description = "Genome MCP server - 优化版本：智能基因组数据访问"
 readme = "README.md"
 license = "MIT"

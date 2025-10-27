@@ -112,15 +112,17 @@ async def main():
         for tool in tools:
             print(f"  - {tool['name']}: {tool.get('description', '无描述')}")
 
-        # 调用基因信息查询
+        # 调用基因信息查询 (使用新的MCP工具)
         print("\n查询TP53基因信息...")
-        gene_info = await client.call_tool("get_gene_info", {"gene_id": "TP53"})
+        gene_info = await client.call_tool(
+            "get_data", {"query": "TP53", "query_type": "info"}
+        )
         print(f"基因信息: {json.dumps(gene_info, indent=2, ensure_ascii=False)}")
 
-        # 调用基因搜索
+        # 调用基因搜索 (使用新的MCP工具)
         print("\n搜索与癌症相关的基因...")
         search_results = await client.call_tool(
-            "search_genes", {"query": "cancer", "max_results": 5}
+            "get_data", {"query": "cancer", "query_type": "search", "max_results": 5}
         )
         print(f"搜索结果: {json.dumps(search_results, indent=2, ensure_ascii=False)}")
 

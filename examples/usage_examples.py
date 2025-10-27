@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-Genome MCP 使用示例
+Genome MCP 现代化使用示例
 
-本文件展示了如何使用 Genome MCP 系统的各种功能。
+本文件展示了如何使用现代化的 Genome MCP 系统的各种功能。
+这个版本完全基于MCP架构，使用QueryParser和QueryExecutor。
 """
 
 import asyncio
@@ -12,9 +13,7 @@ from pathlib import Path
 # 添加 src 到路径
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from genome_mcp.configuration import GenomeMCPConfig
-from genome_mcp.exceptions import DataNotFoundError, ValidationError
-from genome_mcp.servers.ncbi.gene import NCBIGeneServer
+from genome_mcp.core import QueryExecutor, QueryParser
 
 
 async def basic_gene_info_example():
@@ -22,29 +21,29 @@ async def basic_gene_info_example():
     print("🧬 基本基因信息查询示例")
     print("=" * 40)
 
-    config = GenomeMCPConfig()
-    server = NCBIGeneServer(config)
+    parser = QueryParser()
+    executor = QueryExecutor()
 
-    async with server:
-        try:
-            # 查询 TP53 基因信息
-            result = await server.execute_request(
-                "get_gene_info",
-                {"gene_id": "TP53", "species": "human", "include_summary": True},
-            )
+    try:
+        # 查询 TP53 基因信息
+        parsed_query = parser.parse("TP53", query_type="info")
+        result = await executor.execute(parsed_query)
 
-            print(f"基因 ID: {result['gene_id']}")
-            print(f"物种: {result['species']}")
-            print(f"UID: {result['uid']}")
-            print(f"名称: {result['info'].get('name', 'N/A')}")
-            print(f"描述: {result['info'].get('description', 'N/A')}")
-            print(f"染色体位置: {result['info'].get('chromosome', 'N/A')}")
+        print(f"基因符号: {result.get('gene_symbol', 'N/A')}")
+        print(f"基因ID: {result.get('gene_id', 'N/A')}")
+        print(f"物种: {result.get('species', 'N/A')}")
 
-            if "summary" in result:
-                print(f"摘要: {result['summary'][:200]}...")
+        if "chromosome" in result:
+            print(f"染色体位置: {result['chromosome']}")
 
-        except Exception as e:
-            print(f"查询失败: {e}")
+        if "description" in result:
+            print(f"描述: {result['description'][:200]}...")
+
+        if "summary" in result:
+            print(f"摘要: {result['summary'][:200]}...")
+
+    except Exception as e:
+        print(f"查询失败: {e}")
 
 
 async def gene_search_example():
@@ -52,320 +51,253 @@ async def gene_search_example():
     print("\n🔍 基因搜索示例")
     print("=" * 40)
 
-    config = GenomeMCPConfig()
-    server = NCBIGeneServer(config)
+    parser = QueryParser()
+    executor = QueryExecutor()
 
-    async with server:
-        try:
-            # 搜索包含 "BRCA" 的基因
-            result = await server.execute_request(
-                "search_genes", {"term": "BRCA", "species": "human", "max_results": 5}
-            )
+    try:
+        # 搜索包含 "BRCA" 的基因
+        parsed_query = parser.parse("BRCA", query_type="search")
+        result = await executor.execute(parsed_query)
 
-            print(f"搜索词: {result['term']}")
-            print(f"物种: {result['species']}")
-            print(f"总结果数: {result['total_count']}")
-            print(f"显示结果数: {len(result['results'])}")
+        print(f"搜索词: {result.get('term', 'N/A')}")
+        print(f"总结果数: {result.get('total_count', 0)}")
+        print(f"返回结果数: {len(result.get('results', []))}")
 
-            for i, gene in enumerate(result["results"], 1):
-                print(
-                    f"{i}. {gene.get('gene_id', 'N/A')} - {gene.get('description', 'N/A')}"
-                )
+        print("\n前5个结果:")
+        for i, gene in enumerate(result.get("results", [])[:5], 1):
+            gene_id = gene.get("gene_id", "N/A")
+            description = gene.get("description", "No description")
+            print(f"{i}. {gene_id}: {description[:80]}...")
 
-        except Exception as e:
-            print(f"搜索失败: {e}")
+    except Exception as e:
+        print(f"搜索失败: {e}")
 
 
-async def batch_operations_example():
-    """批量操作示例"""
-    print("\n📦 批量操作示例")
+async def batch_query_example():
+    """批量查询示例"""
+    print("\n📦 批量查询示例")
     print("=" * 40)
 
-    config = GenomeMCPConfig()
-    server = NCBIGeneServer(config)
+    parser = QueryParser()
+    executor = QueryExecutor()
 
-    async with server:
-        try:
-            # 批量查询多个基因
-            result = await server.execute_request(
-                "batch_gene_info",
-                {
-                    "gene_ids": ["TP53", "BRCA1", "EGFR", "MYC", "KRAS"],
-                    "species": "human",
-                },
-            )
+    try:
+        # 批量查询多个基因
+        gene_list = ["TP53", "BRCA1", "BRCA2", "EGFR"]
+        parsed_query = parser.parse(gene_list, query_type="batch")
+        result = await executor.execute(parsed_query)
 
-            print(f"物种: {result['species']}")
-            print(f"总基因数: {result['total_genes']}")
-            print(f"成功: {result['successful']}")
-            print(f"失败: {result['failed']}")
+        print(f"查询的基因数量: {result.get('batch_size', 0)}")
+        print(f"成功查询: {len(result.get('results', []))}")
 
-            for gene_result in result["results"]:
-                if gene_result["success"]:
-                    data = gene_result["data"]
-                    print(f"✅ {data['gene_id']}: {data['info'].get('name', 'N/A')}")
-                else:
-                    print(f"❌ {gene_result['gene_id']}: {gene_result['error']}")
+        print("\n查询结果:")
+        for gene_data in result.get("results", []):
+            gene_id = gene_data.get("gene_id", "N/A")
+            description = gene_data.get("description", "No description")
+            print(f"✅ {gene_id}: {description[:60]}...")
 
-        except Exception as e:
-            print(f"批量操作失败: {e}")
+    except Exception as e:
+        print(f"批量查询失败: {e}")
 
 
-async def genomic_region_search_example():
+async def region_search_example():
     """基因组区域搜索示例"""
-    print("\n🧬 基因组区域搜索示例")
+    print("\n🗺️ 基因组区域搜索示例")
     print("=" * 40)
 
-    config = GenomeMCPConfig()
-    server = NCBIGeneServer(config)
+    parser = QueryParser()
+    executor = QueryExecutor()
 
-    async with server:
-        try:
-            # 搜索染色体 17 上的特定区域
-            result = await server.execute_request(
-                "search_by_region",
-                {
-                    "chromosome": "17",
-                    "start": 43044295,
-                    "end": 43125483,
-                    "species": "human",
-                    "max_results": 10,
-                },
-            )
+    try:
+        # 搜索特定基因组区域的基因
+        region = "chr17:7565097-7590856"  # TP53 基因所在区域
+        parsed_query = parser.parse(region, query_type="region")
+        result = await executor.execute(parsed_query)
 
-            print(
-                f"搜索区域: 染色体 {result['results'][0].get('summary', {}).get('chromosome', 'N/A')}"
-            )
-            print(f"总结果数: {result['total_count']}")
+        print(f"搜索区域: {result.get('query', 'N/A')}")
+        print(f"染色体: {result.get('chromosome', 'N/A')}")
+        print(f"起始位置: {result.get('start', 'N/A')}")
+        print(f"结束位置: {result.get('end', 'N/A')}")
+        print(f"找到的基因数量: {len(result.get('genes_found', []))}")
 
-            for i, gene in enumerate(result["results"][:3], 1):
-                summary = gene.get("summary", {})
-                print(
-                    f"{i}. {summary.get('name', 'N/A')} ({summary.get('uid', 'N/A')})"
-                )
+        print("\n区域内的基因:")
+        for gene in result.get("genes_found", []):
+            gene_id = gene.get("gene_id", "N/A")
+            name = gene.get("name", "N/A")
+            print(f"🧬 {gene_id} ({name})")
 
-        except Exception as e:
-            print(f"区域搜索失败: {e}")
+    except Exception as e:
+        print(f"区域搜索失败: {e}")
 
 
-async def gene_homologs_example():
-    """基因同源体查询示例"""
-    print("\n🧬 基因同源体查询示例")
+async def protein_query_example():
+    """蛋白质查询示例"""
+    print("\n🧪 蛋白质查询示例")
     print("=" * 40)
 
-    config = GenomeMCPConfig()
-    server = NCBIGeneServer(config)
+    parser = QueryParser()
+    executor = QueryExecutor()
 
-    async with server:
-        try:
-            # 查询 TP53 的同源体
-            result = await server.execute_request(
-                "get_gene_homologs",
-                {"gene_id": "TP53", "species": "human", "target_species": "mouse"},
-            )
+    try:
+        # 查询蛋白质信息
+        protein_id = "P04637"  # TP53 蛋白质
+        parsed_query = parser.parse(protein_id, query_type="protein")
+        result = await executor.execute(parsed_query)
 
-            print(f"源基因: {result['gene_id']} ({result['species']})")
-            print(f"同源体数量: {len(result['homologs'])}")
+        print(f"蛋白质ID: {result.get('protein_id', 'N/A')}")
+        print(f"基因名称: {result.get('gene_name', 'N/A')}")
+        print(f"蛋白质名称: {result.get('protein_name', 'N/A')}")
 
-            for homolog in result["homologs"][:5]:
-                print(
-                    f"  • {homolog['species']}: {homolog['gene_id']} "
-                    f"(相似度: {homolog.get('identity', 'N/A')})"
-                )
+        if "sequence_length" in result:
+            print(f"序列长度: {result['sequence_length']}")
 
-        except Exception as e:
-            print(f"同源体查询失败: {e}")
+        if "function" in result:
+            print(f"功能: {result['function'][:150]}...")
+
+    except Exception as e:
+        print(f"蛋白质查询失败: {e}")
 
 
-async def concurrent_operations_example():
-    """并发操作示例"""
-    print("\n⚡ 并发操作示例")
+async def pathway_enrichment_example():
+    """通路富集分析示例"""
+    print("\n🧩 通路富集分析示例")
     print("=" * 40)
 
-    config = GenomeMCPConfig()
-    server = NCBIGeneServer(config)
+    parser = QueryParser()
+    executor = QueryExecutor()
 
-    async with server:
-        try:
-            # 并发执行多个不同的操作
-            tasks = [
-                server.execute_request("get_gene_info", {"gene_id": "TP53"}),
-                server.execute_request("get_gene_info", {"gene_id": "BRCA1"}),
-                server.execute_request(
-                    "search_genes", {"term": "cancer", "max_results": 5}
-                ),
-                server.execute_request("get_gene_summary", {"gene_id": "EGFR"}),
-                server.execute_request("get_gene_homologs", {"gene_id": "MYC"}),
-            ]
+    try:
+        # KEGG 通路富集分析
+        gene_list = ["TP53", "BRCA1", "BRCA2", "EGFR", "MYC"]
+        parsed_query = parser.parse(gene_list, query_type="pathway_enrichment")
+        result = await executor.execute(parsed_query)
 
-            print("并发执行 5 个请求...")
-            results = await asyncio.gather(*tasks, return_exceptions=True)
+        print(f"分析的基因数量: {len(result.get('gene_list', []))}")
+        print(f"识别的通路数量: {len(result.get('pathways', []))}")
 
-            for i, result in enumerate(results):
-                if isinstance(result, Exception):
-                    print(f"请求 {i+1} 失败: {result}")
-                else:
-                    operation = [
-                        "TP53信息",
-                        "BRCA1信息",
-                        "癌症基因搜索",
-                        "EGFR摘要",
-                        "MYC同源体",
-                    ][i]
-                    if "gene_id" in result:
-                        print(f"✅ 请求 {i+1} ({operation}): {result['gene_id']}")
-                    elif "term" in result:
-                        print(
-                            f"✅ 请求 {i+1} ({operation}): {result['total_count']} 个结果"
-                        )
-                    else:
-                        print(f"✅ 请求 {i+1} ({operation}): 成功")
+        print("\n前5个显著通路:")
+        for pathway in result.get("pathways", [])[:5]:
+            pathway_id = pathway.get("pathway_id", "N/A")
+            description = pathway.get("description", "N/A")
+            p_value = pathway.get("p_value", "N/A")
+            print(f"🔬 {pathway_id}: {description[:60]}... (p={p_value})")
 
-            # 显示服务器统计信息
-            stats = server.get_stats()
-            print("\n📊 服务器统计:")
-            print(f"   总请求数: {stats['stats']['requests_total']}")
-            print(f"   成功请求: {stats['stats']['requests_success']}")
-            print(f"   失败请求: {stats['stats']['requests_failed']}")
-            print(f"   平均响应时间: {stats['stats']['avg_response_time']:.3f} 秒")
-            print(f"   缓存命中: {stats['stats']['cache_hits']}")
-            print(f"   缓存未命中: {stats['stats']['cache_misses']}")
-
-        except Exception as e:
-            print(f"并发操作失败: {e}")
+    except Exception as e:
+        print(f"通路富集分析失败: {e}")
 
 
-async def error_handling_example():
-    """错误处理示例"""
-    print("\n⚠️ 错误处理示例")
+async def evolution_analysis_example():
+    """进化分析示例"""
+    print("\n🧬 进化分析示例")
     print("=" * 40)
 
-    config = GenomeMCPConfig()
-    server = NCBIGeneServer(config)
+    parser = QueryParser()
+    executor = QueryExecutor()
 
-    async with server:
-        # 测试各种错误情况
+    try:
+        # 基因进化分析
+        gene_symbol = "TP53"
 
-        # 1. 参数验证错误
-        try:
-            await server.execute_request("get_gene_info", {})
-        except ValidationError as e:
-            print(f"✅ 参数验证错误捕获: {e}")
+        parsed_query = parser.parse(gene_symbol, query_type="evolution")
+        result = await executor.execute(parsed_query)
 
-        # 2. 数据未找到错误
-        try:
-            await server.execute_request(
-                "get_gene_info", {"gene_id": "NONEXISTENT_GENE"}
-            )
-        except DataNotFoundError as e:
-            print(f"✅ 数据未找到错误捕获: {e}")
-        except Exception as e:
-            print(f"⚠️ 其他错误: {e}")
+        print(f"目标基因: {result.get('gene_symbol', 'N/A')}")
+        print(f"分析类型: {result.get('analysis_type', 'N/A')}")
+        print(f"发现的同源基因数量: {len(result.get('homologs', []))}")
 
-        # 3. 不支持的操作
-        try:
-            await server.execute_request("unsupported_operation", {})
-        except ValidationError as e:
-            print(f"✅ 不支持操作错误捕获: {e}")
+        print("\n部分同源基因:")
+        for homolog in result.get("homologs", [])[:5]:
+            species = homolog.get("species", "N/A")
+            gene_id = homolog.get("gene_id", "N/A")
+            identity = homolog.get("identity", "N/A")
+            print(f"🧬 {species}: {gene_id} (相似度: {identity})")
 
-        # 4. 批量大小超限
-        try:
-            too_many_genes = [f"GENE{i}" for i in range(200)]
-            await server.execute_request(
-                "batch_gene_info", {"gene_ids": too_many_genes}
-            )
-        except ValidationError as e:
-            print(f"✅ 批量大小超限错误捕获: {e}")
+    except Exception as e:
+        print(f"进化分析失败: {e}")
 
 
-async def performance_comparison_example():
-    """性能对比示例"""
-    print("\n⚡ 性能对比示例")
+async def smart_search_example():
+    """智能语义搜索示例"""
+    print("\n🤖 智能语义搜索示例")
     print("=" * 40)
 
-    config = GenomeMCPConfig()
-    server = NCBIGeneServer(config)
+    parser = QueryParser()
+    executor = QueryExecutor()
 
-    gene_ids = [
-        "TP53",
-        "BRCA1",
-        "EGFR",
-        "MYC",
-        "KRAS",
-        "AKT1",
-        "PIK3CA",
-        "PTEN",
-        "RB1",
-        "CDKN2A",
-    ]
+    try:
+        # 自然语言搜索
+        search_queries = [
+            "breast cancer genes on chromosome 17",
+            "tumor suppressor genes",
+            "DNA repair related genes",
+        ]
 
-    async with server:
-        import time
+        for query in search_queries:
+            print(f"\n搜索: '{query}'")
+            parsed_query = parser.parse(query, query_type="search")
+            result = await executor.execute(parsed_query)
 
-        # 方法 1: 逐个请求
-        print("方法 1: 逐个请求")
-        start_time = time.time()
+            count = result.get("total_count", 0)
+            print(f"找到 {count} 个相关结果")
 
-        individual_results = []
-        for gene_id in gene_ids:
-            try:
-                result = await server.execute_request(
-                    "get_gene_info", {"gene_id": gene_id}
-                )
-                individual_results.append(result)
-            except Exception as e:
-                print(f"  ❌ {gene_id}: {e}")
+            # 显示前2个结果
+            for gene in result.get("results", [])[:2]:
+                gene_id = gene.get("gene_id", "N/A")
+                description = gene.get("description", "N/A")
+                print(f"  📍 {gene_id}: {description[:70]}...")
 
-        individual_time = time.time() - start_time
-        print(
-            f"  完成 {len(individual_results)} 个请求，耗时: {individual_time:.2f} 秒"
-        )
-
-        # 重置统计
-        server.reset_stats()
-
-        # 方法 2: 批量请求
-        print("\n方法 2: 批量请求")
-        start_time = time.time()
-
-        try:
-            batch_result = await server.execute_request(
-                "batch_gene_info", {"gene_ids": gene_ids}
-            )
-            batch_time = time.time() - start_time
-            print(
-                f"  完成 {batch_result['successful']} 个请求，耗时: {batch_time:.2f} 秒"
-            )
-
-            if individual_time > 0:
-                speedup = individual_time / batch_time
-                print(f"  批量操作比逐个请求快 {speedup:.1f} 倍")
-        except Exception as e:
-            print(f"  ❌ 批量请求失败: {e}")
+    except Exception as e:
+        print(f"智能搜索失败: {e}")
 
 
 async def main():
     """主函数：运行所有示例"""
-    print("🚀 Genome MCP 使用示例")
-    print("=" * 60)
+    print("Genome MCP 现代化使用示例")
+    print("=" * 50)
+    print("本示例展示了如何使用 QueryParser + QueryExecutor 模式")
+    print("来访问各种基因组数据功能。")
+    print()
 
-    try:
-        await basic_gene_info_example()
-        await gene_search_example()
-        await batch_operations_example()
-        await genomic_region_search_example()
-        await gene_homologs_example()
-        await concurrent_operations_example()
-        await error_handling_example()
-        await performance_comparison_example()
+    # 运行所有示例
+    examples = [
+        basic_gene_info_example,
+        gene_search_example,
+        batch_query_example,
+        region_search_example,
+        protein_query_example,
+        pathway_enrichment_example,
+        evolution_analysis_example,
+        smart_search_example,
+    ]
 
-        print("\n🎉 所有示例运行完成！")
+    for example in examples:
+        try:
+            await example()
+        except KeyboardInterrupt:
+            print("\n用户中断示例")
+            break
+        except Exception as e:
+            print(f"\n示例执行失败: {e}")
+            continue
 
-    except KeyboardInterrupt:
-        print("\n⏹️ 示例被用户中断")
-    except Exception as e:
-        print(f"\n💥 示例运行出错: {e}")
+    print("\n" + "=" * 50)
+    print("✅ 所有示例演示完成!")
+    print("\n💡 使用提示:")
+    print("1. 所有查询都通过 QueryParser.parse() 解析")
+    print("2. 使用 QueryExecutor.execute() 执行查询")
+    print(
+        "3. 支持10种查询类型: info, search, region, batch, protein, gene_protein, ortholog, evolution, pathway_enrichment"
+    )
+    print("4. 自动查询类型识别: query_type='auto'")
+    print("5. 推荐使用MCP客户端来访问这些功能")
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\n程序被用户中断")
+        sys.exit(0)
+    except Exception as e:
+        print(f"\n程序执行失败: {e}")
+        sys.exit(1)
