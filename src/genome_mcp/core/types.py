@@ -5,8 +5,8 @@
 只为核心公共API定义类型，不过度复杂化
 """
 
-from typing import List, Dict, Any, Optional, Union
 import sys
+from typing import Any
 
 if sys.version_info >= (3, 12):
     from typing import TypedDict
@@ -22,10 +22,10 @@ class GeneInfo(TypedDict):
     gene_symbol: str
     name: str
     description: str
-    chromosome: Optional[str]
-    start_position: Optional[int]
-    end_position: Optional[int]
-    strand: Optional[str]
+    chromosome: str | None
+    start_position: int | None
+    end_position: int | None
+    strand: str | None
 
 
 class ProteinInfo(TypedDict):
@@ -35,17 +35,17 @@ class ProteinInfo(TypedDict):
     accession: str
     name: str
     description: str
-    gene_name: Optional[str]
-    sequence_length: Optional[int]
+    gene_name: str | None
+    sequence_length: int | None
 
 
 class SearchResult(TypedDict):
     """搜索结果类型"""
 
     query: str
-    results: List[Dict[str, Any]]
+    results: list[dict[str, Any]]
     total_count: int
-    search_metadata: Dict[str, Any]
+    search_metadata: dict[str, Any]
 
 
 class BatchResult(TypedDict):
@@ -53,7 +53,7 @@ class BatchResult(TypedDict):
 
     batch_size: int
     successful_count: int
-    results: Dict[str, Union[GeneInfo, ProteinInfo, Dict[str, Any]]]
+    results: dict[str, GeneInfo | ProteinInfo | dict[str, Any]]
 
 
 class AdvancedQueryResult(TypedDict):
@@ -62,7 +62,7 @@ class AdvancedQueryResult(TypedDict):
     strategy: str
     total_queries: int
     successful: int
-    results: Dict[int, Dict[str, Any]]
+    results: dict[int, dict[str, Any]]
 
 
 class ErrorResult(TypedDict):
@@ -70,35 +70,35 @@ class ErrorResult(TypedDict):
 
     error: str
     error_code: str
-    suggestions: List[str]
-    query_info: Optional[Dict[str, Any]]
+    suggestions: list[str]
+    query_info: dict[str, Any] | None
 
 
 class EvolutionResult(TypedDict):
     """进化分析结果类型"""
 
     target_gene: str
-    orthologs: List[Dict[str, Any]]
-    analysis_info: Dict[str, Any]
-    conservation_scores: Optional[Dict[str, float]]
+    orthologs: list[dict[str, Any]]
+    analysis_info: dict[str, Any]
+    conservation_scores: dict[str, float] | None
 
 
 class PhylogeneticProfileResult(TypedDict):
     """系统发育图谱结果类型"""
 
-    query_genes: List[str]
-    phylogenetic_data: Dict[str, List[Dict[str, Any]]]
-    domain_info: Optional[Dict[str, List[Dict[str, Any]]]]
-    profile_metadata: Dict[str, Any]
+    query_genes: list[str]
+    phylogenetic_data: dict[str, list[dict[str, Any]]]
+    domain_info: dict[str, list[dict[str, Any]]] | None
+    profile_metadata: dict[str, Any]
 
 
 class KEGGResult(TypedDict):
     """KEGG通路富集分析结果类型"""
 
-    query_genes: List[str]
-    enriched_pathways: List[Dict[str, Any]]
-    analysis_metadata: Dict[str, Any]
-    query_info: Dict[str, Any]
+    query_genes: list[str]
+    enriched_pathways: list[dict[str, Any]]
+    analysis_metadata: dict[str, Any]
+    query_info: dict[str, Any]
 
 
 # 参数类型
@@ -117,7 +117,7 @@ class QueryParams(TypedDict, total=False):
 class AnalysisParams(TypedDict, total=False):
     """分析参数类型"""
 
-    target_species: Optional[List[str]]
+    target_species: list[str] | None
     analysis_level: str
     include_sequence_info: bool
     pvalue_threshold: float
@@ -125,11 +125,11 @@ class AnalysisParams(TypedDict, total=False):
 
 
 # 通用联合类型
-GeneQueryResult = Union[GeneInfo, SearchResult, BatchResult, ErrorResult]
-ProteinQueryResult = Union[ProteinInfo, SearchResult, BatchResult, ErrorResult]
-EvolutionQueryResult = Union[EvolutionResult, ErrorResult]
-PhylogeneticQueryResult = Union[PhylogeneticProfileResult, ErrorResult]
-KEGGQueryResult = Union[KEGGResult, ErrorResult]
+GeneQueryResult = GeneInfo | SearchResult | BatchResult | ErrorResult
+ProteinQueryResult = ProteinInfo | SearchResult | BatchResult | ErrorResult
+EvolutionQueryResult = EvolutionResult | ErrorResult
+PhylogeneticQueryResult = PhylogeneticProfileResult | ErrorResult
+KEGGQueryResult = KEGGResult | ErrorResult
 
 
 # 工具返回类型
@@ -137,9 +137,9 @@ class ToolResult(TypedDict):
     """通用工具返回类型"""
 
     success: bool
-    data: Optional[Dict[str, Any]]
-    error: Optional[str]
-    metadata: Optional[Dict[str, Any]]
+    data: dict[str, Any] | None
+    error: str | None
+    metadata: dict[str, Any] | None
 
 
 # 数据源类型
@@ -167,20 +167,20 @@ class IDFormatInfo(TypedDict):
 
     format: str
     description: str
-    examples: List[str]
+    examples: list[str]
 
 
 class SpeciesCodes(TypedDict):
     """物种代码类型"""
 
-    common_names: List[str]
-    taxid_codes: List[str]
-    kegg_codes: List[str]
+    common_names: list[str]
+    taxid_codes: list[str]
+    kegg_codes: list[str]
 
 
 class IDFormats(TypedDict):
     """ID格式类型"""
 
-    gene_identifiers: Dict[str, IDFormatInfo]
-    protein_identifiers: Dict[str, IDFormatInfo]
+    gene_identifiers: dict[str, IDFormatInfo]
+    protein_identifiers: dict[str, IDFormatInfo]
     species_codes: SpeciesCodes

@@ -5,8 +5,6 @@
 只验证真正重要的参数，防止滥用和性能问题
 """
 
-from typing import Optional, Tuple
-
 
 class ValidationError(Exception):
     """参数验证错误"""
@@ -16,7 +14,7 @@ class ValidationError(Exception):
 
 def validate_common_params(
     max_results: int = 20, species: str = "human", query_type: str = "auto"
-) -> Tuple[int, str]:
+) -> tuple[int, str]:
     """
     验证通用参数
 
@@ -82,9 +80,9 @@ def validate_common_params(
 
 def validate_gene_params(
     gene_symbol: str,
-    target_species: Optional[list] = None,
+    target_species: list | None = None,
     analysis_level: str = "Eukaryota",
-) -> Tuple[str, Optional[list], str]:
+) -> tuple[str, list | None, str]:
     """
     验证基因分析参数
 
@@ -129,7 +127,7 @@ def validate_kegg_params(
     organism: str = "hsa",
     pvalue_threshold: float = 0.05,
     min_gene_count: int = 2,
-) -> Tuple[list, str, float, int]:
+) -> tuple[list, str, float, int]:
     """
     验证KEGG通路分析参数
 
@@ -185,7 +183,7 @@ def validate_kegg_params(
 
 def validate_search_params(
     description: str, context: str = "genomics", max_results: int = 20
-) -> Tuple[str, str, int]:
+) -> tuple[str, str, int]:
     """
     验证搜索参数
 

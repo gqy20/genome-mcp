@@ -6,33 +6,30 @@ MCP工具模块 - 实现所有MCP工具接口
 """
 
 import asyncio
-from typing import Any, Optional
+from typing import Any
 
 from fastmcp import FastMCP
 
+from .errors import ValidationError, format_simple_error
 from .evolution_tools import analyze_gene_evolution as _analyze_gene_evolution_internal
 from .evolution_tools import (
     build_phylogenetic_profile as _build_phylogenetic_profile_internal,
 )
 from .query_executor import QueryExecutor
 from .query_parser import QueryParser
+from .types import (
+    AdvancedQueryResult,
+    EvolutionResult,
+    KEGGResult,
+    PhylogeneticProfileResult,
+    SearchResult,
+    ToolResult,
+)
 from .validation import (
     validate_common_params,
     validate_gene_params,
     validate_kegg_params,
     validate_search_params,
-)
-from .errors import format_simple_error, ValidationError, DataNotFoundError, APIError
-from .types import (
-    ToolResult,
-    GeneInfo,
-    ProteinInfo,
-    SearchResult,
-    BatchResult,
-    AdvancedQueryResult,
-    EvolutionResult,
-    PhylogeneticProfileResult,
-    KEGGResult,
 )
 
 # 全局查询执行器实例
@@ -88,7 +85,7 @@ def _format_simple_result(result: ToolResult) -> ToolResult:
     return result
 
 
-def _apply_filters(query: str, filters: Optional[dict[str, Any]] = None) -> str:
+def _apply_filters(query: str, filters: dict[str, Any] | None = None) -> str:
     """应用搜索过滤器"""
     if not filters:
         return query

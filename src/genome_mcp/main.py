@@ -31,7 +31,7 @@ import sys
 
 from fastmcp import FastMCP
 
-from .core.tools import create_mcp_tools, create_mcp_resources
+from .core.tools import create_mcp_resources, create_mcp_tools
 
 # 创建MCP实例
 mcp = FastMCP("Genome MCP", version="0.2.5")

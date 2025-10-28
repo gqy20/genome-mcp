@@ -5,7 +5,7 @@
 提供统一的错误处理，但不过度复杂化
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class GenomeMCPError(Exception):
@@ -15,8 +15,8 @@ class GenomeMCPError(Exception):
         self,
         message: str,
         error_code: str,
-        suggestions: Optional[List[str]] = None,
-        query_info: Optional[Dict[str, Any]] = None,
+        suggestions: list[str] | None = None,
+        query_info: dict[str, Any] | None = None,
     ):
         super().__init__(message)
         self.message = message
@@ -24,7 +24,7 @@ class GenomeMCPError(Exception):
         self.suggestions = suggestions or []
         self.query_info = query_info or {}
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         result = {
             "error": self.message,
@@ -41,7 +41,7 @@ class GenomeMCPError(Exception):
 class ValidationError(GenomeMCPError):
     """参数验证错误"""
 
-    def __init__(self, message: str, param_name: Optional[str] = None):
+    def __init__(self, message: str, param_name: str | None = None):
         super().__init__(
             message=message,
             error_code="VALIDATION_ERROR",
@@ -61,8 +61,8 @@ class APIError(GenomeMCPError):
         self,
         message: str,
         api_name: str,
-        status_code: Optional[int] = None,
-        suggestions: Optional[List[str]] = None,
+        status_code: int | None = None,
+        suggestions: list[str] | None = None,
     ):
         default_suggestions = [
             "Check network connection",
@@ -101,7 +101,7 @@ class DataNotFoundError(GenomeMCPError):
 class RateLimitError(GenomeMCPError):
     """API频率限制错误"""
 
-    def __init__(self, api_name: str, retry_after: Optional[int] = None):
+    def __init__(self, api_name: str, retry_after: int | None = None):
         message = f"Rate limit exceeded for {api_name} API"
         if retry_after:
             message += f". Please wait {retry_after} seconds before retrying."
@@ -121,7 +121,7 @@ class RateLimitError(GenomeMCPError):
 class InternalError(GenomeMCPError):
     """内部系统错误"""
 
-    def __init__(self, message: str, component: Optional[str] = None):
+    def __init__(self, message: str, component: str | None = None):
         super().__init__(
             message=f"Internal error: {message}",
             error_code="INTERNAL_ERROR",
@@ -135,8 +135,8 @@ class InternalError(GenomeMCPError):
 
 
 def format_simple_error(
-    error: Exception, query: Optional[str] = None, operation: Optional[str] = None
-) -> Dict[str, Any]:
+    error: Exception, query: str | None = None, operation: str | None = None
+) -> dict[str, Any]:
     """
     格式化简单错误响应
 
@@ -188,7 +188,7 @@ def create_validation_error_message(
 
 
 def create_api_error_message(
-    api_name: str, status: str, details: Optional[str] = None
+    api_name: str, status: str, details: str | None = None
 ) -> str:
     """
     创建API错误消息
@@ -242,17 +242,17 @@ def handle_errors(operation_name: str):
                 raise APIError(
                     create_api_error_message("Network", "connection failed", str(e)),
                     "Network",
-                )
+                ) from e
             except TimeoutError as e:
                 raise APIError(
                     create_api_error_message("Network", "timeout", str(e)), "Network"
-                )
+                ) from e
             except ValueError as e:
-                raise ValidationError(f"Invalid parameter: {str(e)}")
+                raise ValidationError(f"Invalid parameter: {str(e)}") from e
             except Exception as e:
                 raise InternalError(
                     f"Unexpected error in {operation_name}: {str(e)}", operation_name
-                )
+                ) from e
 
         return wrapper
 
