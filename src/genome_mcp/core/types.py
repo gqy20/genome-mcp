@@ -5,11 +5,13 @@
 只为核心公共API定义类型，不过度复杂化
 """
 
-try:
-    from typing import TypedDict, List, Dict, Any, Optional, Union
-except ImportError:
+from typing import List, Dict, Any, Optional, Union
+import sys
+
+if sys.version_info >= (3, 12):
+    from typing import TypedDict
+else:
     from typing_extensions import TypedDict
-    from typing import List, Dict, Any, Optional, Union
 
 
 # 基础数据类型
