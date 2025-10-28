@@ -22,7 +22,7 @@ jobs:
         uv sync --dev
     - name: Run tests
       run: |
-        uv run pytest
+        uv run pytest tests/ -v
     - name: Check formatting
       run: |
         uv run ruff format --check src/ tests/

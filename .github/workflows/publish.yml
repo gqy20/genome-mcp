@@ -73,7 +73,37 @@ jobs:
     - name: Build package
       run: |
         echo "📦 构建Python包..."
+
+        # Extract version
+        if [[ "${{ steps.trigger.outputs.source }}" == "tag" ]]; then
+          VERSION=${GITHUB_REF#refs/tags/v}
+        else
+          VERSION=$(uv version --short 2>/dev/null || grep "version = " pyproject.toml | cut -d'"' -f2)
+        fi
+        echo "Building version $VERSION"
+
+        # 清理可能存在的缓存和构建产物
+        rm -rf dist/ build/ *.egg-info src/genome_mcp.egg-info 2>/dev/null || true
+
+        # 重新同步以确保版本正确
+        uv sync --no-dev
+
+        # 构建包
         uv build
+
+        # 验证构建的版本
+        ls -la dist/
+
+        # 检查构建的包版本是否正确
+        if echo dist/* | grep -q "$VERSION"; then
+          echo "✅ 构建版本正确: $VERSION"
+        else
+          echo "❌ 构建版本错误，期望 $VERSION"
+          ls -la dist/
+          exit 1
+        fi
+
+        # 验证包可以安装
         uvx --from . genome-mcp --help
 
     - name: Extract version and changelog
