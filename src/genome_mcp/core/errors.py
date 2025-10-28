@@ -16,7 +16,7 @@ class GenomeMCPError(Exception):
         message: str,
         error_code: str,
         suggestions: Optional[List[str]] = None,
-        query_info: Optional[Dict[str, Any]] = None
+        query_info: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(message)
         self.message = message
@@ -29,7 +29,7 @@ class GenomeMCPError(Exception):
         result = {
             "error": self.message,
             "error_code": self.error_code,
-            "suggestions": self.suggestions
+            "suggestions": self.suggestions,
         }
 
         if self.query_info:
@@ -48,9 +48,9 @@ class ValidationError(GenomeMCPError):
             suggestions=[
                 "Check parameter format",
                 "Ensure all required parameters are provided",
-                "Refer to documentation for valid parameter ranges"
+                "Refer to documentation for valid parameter ranges",
             ],
-            query_info={"invalid_param": param_name} if param_name else None
+            query_info={"invalid_param": param_name} if param_name else None,
         )
 
 
@@ -62,12 +62,12 @@ class APIError(GenomeMCPError):
         message: str,
         api_name: str,
         status_code: Optional[int] = None,
-        suggestions: Optional[List[str]] = None
+        suggestions: Optional[List[str]] = None,
     ):
         default_suggestions = [
             "Check network connection",
             "Try again later",
-            "Verify API service status"
+            "Verify API service status",
         ]
 
         if suggestions:
@@ -77,10 +77,7 @@ class APIError(GenomeMCPError):
             message=message,
             error_code="API_ERROR",
             suggestions=default_suggestions,
-            query_info={
-                "api_name": api_name,
-                "status_code": status_code
-            }
+            query_info={"api_name": api_name, "status_code": status_code},
         )
 
 
@@ -95,9 +92,9 @@ class DataNotFoundError(GenomeMCPError):
                 "Check spelling of gene/protein names",
                 "Try using different identifiers",
                 "Verify the species is correct",
-                "Use broader search terms"
+                "Use broader search terms",
             ],
-            query_info={"query": query, "data_type": data_type}
+            query_info={"query": query, "data_type": data_type},
         )
 
 
@@ -115,12 +112,9 @@ class RateLimitError(GenomeMCPError):
             suggestions=[
                 "Reduce query frequency",
                 "Use batch queries when possible",
-                f"Wait {retry_after or 'a few'} seconds before retrying"
+                f"Wait {retry_after or 'a few'} seconds before retrying",
             ],
-            query_info={
-                "api_name": api_name,
-                "retry_after": retry_after
-            }
+            query_info={"api_name": api_name, "retry_after": retry_after},
         )
 
 
@@ -134,16 +128,14 @@ class InternalError(GenomeMCPError):
             suggestions=[
                 "Try the query again",
                 "Contact support if the problem persists",
-                "Check system status"
+                "Check system status",
             ],
-            query_info={"component": component} if component else None
+            query_info={"component": component} if component else None,
         )
 
 
 def format_simple_error(
-    error: Exception,
-    query: Optional[str] = None,
-    operation: Optional[str] = None
+    error: Exception, query: Optional[str] = None, operation: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     格式化简单错误响应
@@ -165,8 +157,8 @@ def format_simple_error(
             "suggestions": [
                 "Try the query again",
                 "Check input parameters",
-                "Contact support if the problem persists"
-            ]
+                "Contact support if the problem persists",
+            ],
         }
 
     # 添加通用查询信息
@@ -178,7 +170,9 @@ def format_simple_error(
     return result
 
 
-def create_validation_error_message(param_name: str, value: Any, expected_type: str) -> str:
+def create_validation_error_message(
+    param_name: str, value: Any, expected_type: str
+) -> str:
     """
     创建参数验证错误消息
 
@@ -193,7 +187,9 @@ def create_validation_error_message(param_name: str, value: Any, expected_type: 
     return f"Invalid {param_name}: '{value}'. Expected {expected_type}"
 
 
-def create_api_error_message(api_name: str, status: str, details: Optional[str] = None) -> str:
+def create_api_error_message(
+    api_name: str, status: str, details: Optional[str] = None
+) -> str:
     """
     创建API错误消息
 
@@ -214,6 +210,7 @@ def create_api_error_message(api_name: str, status: str, details: Optional[str] 
 # 常用错误代码常量
 class ErrorCodes:
     """错误代码常量"""
+
     VALIDATION_ERROR = "VALIDATION_ERROR"
     API_ERROR = "API_ERROR"
     DATA_NOT_FOUND = "DATA_NOT_FOUND"
@@ -233,6 +230,7 @@ def handle_errors(operation_name: str):
     Args:
         operation_name: 操作名称，用于错误报告
     """
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             try:
@@ -243,19 +241,19 @@ def handle_errors(operation_name: str):
             except ConnectionError as e:
                 raise APIError(
                     create_api_error_message("Network", "connection failed", str(e)),
-                    "Network"
+                    "Network",
                 )
             except TimeoutError as e:
                 raise APIError(
-                    create_api_error_message("Network", "timeout", str(e)),
-                    "Network"
+                    create_api_error_message("Network", "timeout", str(e)), "Network"
                 )
             except ValueError as e:
                 raise ValidationError(f"Invalid parameter: {str(e)}")
             except Exception as e:
                 raise InternalError(
-                    f"Unexpected error in {operation_name}: {str(e)}",
-                    operation_name
+                    f"Unexpected error in {operation_name}: {str(e)}", operation_name
                 )
+
         return wrapper
+
     return decorator

@@ -10,13 +10,12 @@ from typing import Optional, Tuple
 
 class ValidationError(Exception):
     """参数验证错误"""
+
     pass
 
 
 def validate_common_params(
-    max_results: int = 20,
-    species: str = "human",
-    query_type: str = "auto"
+    max_results: int = 20, species: str = "human", query_type: str = "auto"
 ) -> Tuple[int, str]:
     """
     验证通用参数
@@ -55,7 +54,7 @@ def validate_common_params(
         "10116": "10116",
         "7955": "7955",
         "7227": "7227",
-        "6239": "6239"
+        "6239": "6239",
     }
 
     if species not in valid_species:
@@ -64,8 +63,15 @@ def validate_common_params(
 
     # 验证query_type
     valid_query_types = {
-        "auto", "info", "search", "region", "protein",
-        "gene_protein", "ortholog", "evolution", "batch"
+        "auto",
+        "info",
+        "search",
+        "region",
+        "protein",
+        "gene_protein",
+        "ortholog",
+        "evolution",
+        "batch",
     }
 
     if query_type not in valid_query_types:
@@ -77,7 +83,7 @@ def validate_common_params(
 def validate_gene_params(
     gene_symbol: str,
     target_species: Optional[list] = None,
-    analysis_level: str = "Eukaryota"
+    analysis_level: str = "Eukaryota",
 ) -> Tuple[str, Optional[list], str]:
     """
     验证基因分析参数
@@ -122,7 +128,7 @@ def validate_kegg_params(
     gene_list: list,
     organism: str = "hsa",
     pvalue_threshold: float = 0.05,
-    min_gene_count: int = 2
+    min_gene_count: int = 2,
 ) -> Tuple[list, str, float, int]:
     """
     验证KEGG通路分析参数
@@ -178,9 +184,7 @@ def validate_kegg_params(
 
 
 def validate_search_params(
-    description: str,
-    context: str = "genomics",
-    max_results: int = 20
+    description: str, context: str = "genomics", max_results: int = 20
 ) -> Tuple[str, str, int]:
     """
     验证搜索参数

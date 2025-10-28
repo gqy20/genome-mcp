@@ -11,14 +11,28 @@ from typing import Any, Optional
 from fastmcp import FastMCP
 
 from .evolution_tools import analyze_gene_evolution as _analyze_gene_evolution_internal
-from .evolution_tools import build_phylogenetic_profile as _build_phylogenetic_profile_internal
+from .evolution_tools import (
+    build_phylogenetic_profile as _build_phylogenetic_profile_internal,
+)
 from .query_executor import QueryExecutor
 from .query_parser import QueryParser
-from .validation import validate_common_params, validate_gene_params, validate_kegg_params, validate_search_params
+from .validation import (
+    validate_common_params,
+    validate_gene_params,
+    validate_kegg_params,
+    validate_search_params,
+)
 from .errors import format_simple_error, ValidationError, DataNotFoundError, APIError
 from .types import (
-    ToolResult, GeneInfo, ProteinInfo, SearchResult, BatchResult, AdvancedQueryResult,
-    EvolutionResult, PhylogeneticProfileResult, KEGGResult
+    ToolResult,
+    GeneInfo,
+    ProteinInfo,
+    SearchResult,
+    BatchResult,
+    AdvancedQueryResult,
+    EvolutionResult,
+    PhylogeneticProfileResult,
+    KEGGResult,
 )
 
 # 全局查询执行器实例
@@ -114,31 +128,32 @@ def create_mcp_resources(mcp: FastMCP) -> None:
             str: 包含数据库状态的JSON字符串
         """
         import json
+
         status = {
             "ncbi_gene": {
                 "name": "NCBI Gene",
                 "status": "operational",
                 "description": "Comprehensive gene information database",
-                "last_checked": "2025-10-28"
+                "last_checked": "2025-10-28",
             },
             "uniprot": {
                 "name": "UniProt",
                 "status": "operational",
                 "description": "Protein sequence and functional information",
-                "last_checked": "2025-10-28"
+                "last_checked": "2025-10-28",
             },
             "ensembl": {
                 "name": "Ensembl",
                 "status": "operational",
                 "description": "Vertebrate genomics and homology data",
-                "last_checked": "2025-10-28"
+                "last_checked": "2025-10-28",
             },
             "kegg": {
                 "name": "KEGG",
                 "status": "operational",
                 "description": "Pathway and metabolic network analysis",
-                "last_checked": "2025-10-28"
-            }
+                "last_checked": "2025-10-28",
+            },
         }
         return json.dumps(status, indent=2, ensure_ascii=False)
 
@@ -153,41 +168,49 @@ def create_mcp_resources(mcp: FastMCP) -> None:
             str: 包含ID格式说明的JSON字符串
         """
         import json
+
         formats = {
             "gene_identifiers": {
                 "gene_symbol": {
                     "format": "TP53, BRCA1",
                     "description": "Standard gene symbols (case-sensitive)",
-                    "examples": ["TP53", "BRCA1", "EGFR"]
+                    "examples": ["TP53", "BRCA1", "EGFR"],
                 },
                 "entrez_id": {
                     "format": "7157, 672",
                     "description": "NCBI Entrez Gene ID",
-                    "examples": ["7157", "672", "1956"]
+                    "examples": ["7157", "672", "1956"],
                 },
                 "ensembl_id": {
                     "format": "ENSG00000141510",
                     "description": "Ensembl Gene ID",
-                    "examples": ["ENSG00000141510", "ENSG00000012048"]
-                }
+                    "examples": ["ENSG00000141510", "ENSG00000012048"],
+                },
             },
             "protein_identifiers": {
                 "uniprot_accession": {
                     "format": "P04637, P38398",
                     "description": "UniProt accession number",
-                    "examples": ["P04637", "P38398", "P00533"]
+                    "examples": ["P04637", "P38398", "P00533"],
                 },
                 "uniprot_id": {
                     "format": "P53_HUMAN, EGFR_HUMAN",
                     "description": "UniProt identifier",
-                    "examples": ["P53_HUMAN", "EGFR_HUMAN"]
-                }
+                    "examples": ["P53_HUMAN", "EGFR_HUMAN"],
+                },
             },
             "species_codes": {
-                "common_names": ["human", "mouse", "rat", "zebrafish", "fruitfly", "worm"],
+                "common_names": [
+                    "human",
+                    "mouse",
+                    "rat",
+                    "zebrafish",
+                    "fruitfly",
+                    "worm",
+                ],
                 "taxid_codes": ["9606", "10090", "10116", "7955", "7227", "6239"],
-                "kegg_codes": ["hsa", "mmu", "rno", "dre", "dme", "cel"]
-            }
+                "kegg_codes": ["hsa", "mmu", "rno", "dre", "dme", "cel"],
+            },
         }
         return json.dumps(formats, indent=2, ensure_ascii=False)
 
@@ -202,37 +225,27 @@ def create_mcp_resources(mcp: FastMCP) -> None:
             str: 包含查询示例的JSON字符串
         """
         import json
+
         examples = {
-            "basic_gene_queries": [
-                "TP53",
-                "BRCA1",
-                "EGFR"
-            ],
-            "protein_queries": [
-                "P04637",
-                "P38398",
-                "TP53_HUMAN"
-            ],
+            "basic_gene_queries": ["TP53", "BRCA1", "EGFR"],
+            "protein_queries": ["P04637", "P38398", "TP53_HUMAN"],
             "functional_searches": [
                 "tumor suppressor",
                 "protein kinase",
                 "DNA repair",
-                "cell cycle"
+                "cell cycle",
             ],
             "genomic_regions": [
                 "chr17:7565097-7590856",
                 "chr13:32315082-32400266",
-                "chrX:153694058-153697843"
+                "chrX:153694058-153697843",
             ],
-            "batch_queries": [
-                "TP53, BRCA1, BRCA2",
-                "P04637, P38398, P00533"
-            ],
+            "batch_queries": ["TP53, BRCA1, BRCA2", "P04637, P38398, P00533"],
             "complex_queries": [
                 "breast cancer genes on chromosome 17",
                 "TP53 protein interactions",
-                "DNA repair pathways"
-            ]
+                "DNA repair pathways",
+            ],
         }
         return json.dumps(examples, indent=2, ensure_ascii=False)
 
@@ -296,10 +309,10 @@ def create_mcp_tools(mcp: FastMCP) -> None:
         """
         try:
             # 验证通用参数
-            validated_max_results, validated_species, validated_query_type = validate_common_params(
-                max_results=max_results,
-                species=species,
-                query_type=query_type
+            validated_max_results, validated_species, validated_query_type = (
+                validate_common_params(
+                    max_results=max_results, species=species, query_type=query_type
+                )
             )
 
             # 根据data_type参数调整查询类型
@@ -322,7 +335,9 @@ def create_mcp_tools(mcp: FastMCP) -> None:
                 parsed.params["organism"] = validated_species
 
             # 执行查询
-            result = await _query_executor.execute(parsed, max_results=validated_max_results)
+            result = await _query_executor.execute(
+                parsed, max_results=validated_max_results
+            )
 
             # 格式化结果
             if format == "simple":
@@ -372,9 +387,13 @@ def create_mcp_tools(mcp: FastMCP) -> None:
                 results[index] = result
                 await asyncio.sleep(delay)  # 遵守频率限制
             except ValidationError as e:
-                results[index] = format_simple_error(e, query=query_dict.get("query", ""), operation="advanced_query")
+                results[index] = format_simple_error(
+                    e, query=query_dict.get("query", ""), operation="advanced_query"
+                )
             except Exception as e:
-                results[index] = format_simple_error(e, query=query_dict.get("query", ""), operation="advanced_query")
+                results[index] = format_simple_error(
+                    e, query=query_dict.get("query", ""), operation="advanced_query"
+                )
 
         if strategy == "parallel":
             # 并发查询
@@ -393,9 +412,13 @@ def create_mcp_tools(mcp: FastMCP) -> None:
                     results[i] = result
                     await asyncio.sleep(delay)  # 遵守频率限制
                 except ValidationError as e:
-                    results[i] = format_simple_error(e, query=query_dict.get("query", ""), operation="advanced_query")
+                    results[i] = format_simple_error(
+                        e, query=query_dict.get("query", ""), operation="advanced_query"
+                    )
                 except Exception as e:
-                    results[i] = format_simple_error(e, query=query_dict.get("query", ""), operation="advanced_query")
+                    results[i] = format_simple_error(
+                        e, query=query_dict.get("query", ""), operation="advanced_query"
+                    )
 
         return {
             "strategy": strategy,
@@ -436,10 +459,10 @@ def create_mcp_tools(mcp: FastMCP) -> None:
         """
         try:
             # 验证搜索参数
-            validated_description, validated_context, validated_max_results = validate_search_params(
-                description=description,
-                context=context,
-                max_results=max_results
+            validated_description, validated_context, validated_max_results = (
+                validate_search_params(
+                    description=description, context=context, max_results=max_results
+                )
             )
 
             # 智能解析查询意图
@@ -457,7 +480,9 @@ def create_mcp_tools(mcp: FastMCP) -> None:
             parsed = QueryParser.parse(query, query_type)
 
             # 执行查询（直接使用查询执行器，避免MCP工具间调用）
-            result = await _query_executor.execute(parsed, max_results=validated_max_results)
+            result = await _query_executor.execute(
+                parsed, max_results=validated_max_results
+            )
 
             # 添加智能解析信息
             result["smart_search_info"] = {
@@ -499,10 +524,14 @@ def create_mcp_tools(mcp: FastMCP) -> None:
         """
         try:
             # 验证基因分析参数
-            validated_gene_symbol, validated_target_species, validated_analysis_level = validate_gene_params(
+            (
+                validated_gene_symbol,
+                validated_target_species,
+                validated_analysis_level,
+            ) = validate_gene_params(
                 gene_symbol=gene_symbol,
                 target_species=target_species,
-                analysis_level=analysis_level
+                analysis_level=analysis_level,
             )
 
             return await _analyze_gene_evolution_internal(
@@ -513,9 +542,13 @@ def create_mcp_tools(mcp: FastMCP) -> None:
                 _query_executor,
             )
         except ValidationError as e:
-            return format_simple_error(e, query=gene_symbol, operation="analyze_gene_evolution")
+            return format_simple_error(
+                e, query=gene_symbol, operation="analyze_gene_evolution"
+            )
         except Exception as e:
-            return format_simple_error(e, query=gene_symbol, operation="analyze_gene_evolution")
+            return format_simple_error(
+                e, query=gene_symbol, operation="analyze_gene_evolution"
+            )
 
     @mcp.tool()
     async def build_phylogenetic_profile(
@@ -543,9 +576,13 @@ def create_mcp_tools(mcp: FastMCP) -> None:
                 gene_symbols, species_set, include_domain_info, _query_executor
             )
         except ValidationError as e:
-            return format_simple_error(e, query=str(gene_symbols), operation="build_phylogenetic_profile")
+            return format_simple_error(
+                e, query=str(gene_symbols), operation="build_phylogenetic_profile"
+            )
         except Exception as e:
-            return format_simple_error(e, query=str(gene_symbols), operation="build_phylogenetic_profile")
+            return format_simple_error(
+                e, query=str(gene_symbols), operation="build_phylogenetic_profile"
+            )
 
     @mcp.tool()
     async def kegg_pathway_enrichment(
@@ -584,15 +621,22 @@ def create_mcp_tools(mcp: FastMCP) -> None:
         """
         try:
             # 验证KEGG分析参数
-            validated_gene_list, validated_organism, validated_pvalue_threshold, validated_min_gene_count = validate_kegg_params(
+            (
+                validated_gene_list,
+                validated_organism,
+                validated_pvalue_threshold,
+                validated_min_gene_count,
+            ) = validate_kegg_params(
                 gene_list=gene_list,
                 organism=organism,
                 pvalue_threshold=pvalue_threshold,
-                min_gene_count=min_gene_count
+                min_gene_count=min_gene_count,
             )
 
             # 使用QueryParser解析为通路富集查询
-            parsed = QueryParser.parse(validated_gene_list, query_type="pathway_enrichment")
+            parsed = QueryParser.parse(
+                validated_gene_list, query_type="pathway_enrichment"
+            )
 
             # 更新参数
             parsed.params.update(
@@ -643,6 +687,10 @@ def create_mcp_tools(mcp: FastMCP) -> None:
                 }
 
         except ValidationError as e:
-            return format_simple_error(e, query=str(gene_list), operation="kegg_pathway_enrichment")
+            return format_simple_error(
+                e, query=str(gene_list), operation="kegg_pathway_enrichment"
+            )
         except Exception as e:
-            return format_simple_error(e, query=str(gene_list), operation="kegg_pathway_enrichment")
+            return format_simple_error(
+                e, query=str(gene_list), operation="kegg_pathway_enrichment"
+            )
