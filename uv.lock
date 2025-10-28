@@ -870,6 +870,7 @@ source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
     { name = "fastmcp" },
+    { name = "typing-extensions" },
 ]
 
 [package.optional-dependencies]
@@ -898,6 +899,7 @@ requires-dist = [
     { name = "pytest-asyncio", marker = "extra == 'test'", specifier = ">=0.21.0" },
     { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=4.0.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
+    { name = "typing-extensions", specifier = ">=4.0.0" },
 ]
 provides-extras = ["dev", "test"]
 

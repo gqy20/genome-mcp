@@ -11,6 +11,13 @@ import sys
 from pathlib import Path
 from typing import List, Dict, Set, Optional
 
+# 处理Python版本兼容性问题
+try:
+    from typing import TypedDict
+except ImportError:
+    # 在Python < 3.12环境中，不直接使用TypedDict
+    TypedDict = None
+
 
 class FastMCPComplianceChecker:
     """FastMCP合规性深度检查器"""
@@ -381,8 +388,8 @@ class FastMCPComplianceChecker:
         with open(types_file, 'r', encoding='utf-8') as f:
             content = f.read()
 
-        # 检查TypedDict导入
-        if 'from typing import TypedDict' not in content:
+        # 检查TypedDict导入（兼容Python 3.11和3.12+）
+        if not any(pattern in content for pattern in ['from typing import TypedDict', 'from typing_extensions import TypedDict']):
             self.issues.append("❌ types.py未导入TypedDict")
 
         # 检查关键类型定义
