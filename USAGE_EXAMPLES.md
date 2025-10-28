@@ -2,7 +2,7 @@
 
 ## 📋 概述
 
-Genome MCP v0.2.3 支持三种传输模式：STDIO、HTTP 和 SSE，适用于不同的使用场景。
+Genome MCP v0.2.5 支持三种传输模式：STDIO、HTTP 和 SSE，适用于不同的使用场景。
 
 ## 🚀 启动模式
 
