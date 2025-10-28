@@ -20,9 +20,12 @@ jobs:
     - name: Install dependencies
       run: |
         uv sync --dev
+    - name: Verify pytest installation
+      run: |
+        uv run python -m pytest --version
     - name: Run tests
       run: |
-        uv run pytest tests/ -v
+        uv run python -m pytest tests/ -v
     - name: Check formatting
       run: |
         uv run ruff format --check src/ tests/
