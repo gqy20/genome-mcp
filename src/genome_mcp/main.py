@@ -133,10 +133,7 @@ def main():
 
     print(f"📊 传输协议: {transport}")
     print("🛠️  工具数量: 6个核心工具")
-<<<<<<< HEAD
     print("📚 资源数量: 3个数据资源")
-=======
->>>>>>> 921a12edf3ce537f88e50a5fbff70106ff0cb3f5
     print("🧬 功能: 基因查询 | 同源分析 | 进化研究 | 语义搜索")
     print("=" * 60)
     print("🚀 正在启动服务器...\n")
