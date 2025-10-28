@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "genome-mcp": {
+      "command": "uvx",
+      "args": ["genome-mcp"]
+    }
+  }
+}
