@@ -117,12 +117,9 @@ def main():
         if args.host != "127.0.0.1":
             run_kwargs["host"] = args.host
 
-    # 显示启动信息
-    print("\n" + "=" * 60)
-    if args.mode == "stdio":
-        print("🧬 启动Genome MCP服务器 (STDIO模式)")
-        print("📝 适用于Claude Desktop等本地MCP客户端")
-    else:
+    # 只有非STDIO模式才显示启动信息
+    if args.mode != "stdio":
+        print("\n" + "=" * 60)
         print(f"🧬 启动Genome MCP服务器 ({args.mode.upper()}模式)")
         if args.host == "0.0.0.0":
             print(f"🌐 服务器地址: http://0.0.0.0:{args.port}/mcp")
@@ -130,21 +127,23 @@ def main():
         else:
             print(f"🏠 服务器地址: http://{args.host}:{args.port}/mcp")
             print("🔒 仅本地访问")
-
-    print(f"📊 传输协议: {transport}")
-    print("🛠️  工具数量: 6个核心工具")
-    print("📚 资源数量: 3个数据资源")
-    print("🧬 功能: 基因查询 | 同源分析 | 进化研究 | 语义搜索")
-    print("=" * 60)
-    print("🚀 正在启动服务器...\n")
+        print(f"📊 传输协议: {transport}")
+        print("🛠️  工具数量: 6个核心工具")
+        print("📚 资源数量: 3个数据资源")
+        print("🧬 功能: 基因查询 | 同源分析 | 进化研究 | 语义搜索")
+        print("=" * 60)
+        print("🚀 正在启动服务器...\n")
+    # STDIO模式保持静默，避免干扰MCP协议通信
 
     # 启动服务器
     try:
         mcp.run(**run_kwargs)
     except KeyboardInterrupt:
-        print("\n👋 服务器已停止")
+        if args.mode != "stdio":
+            print("\n👋 服务器已停止")
     except Exception as e:
-        print(f"❌ 启动失败: {e}")
+        if args.mode != "stdio":
+            print(f"❌ 启动失败: {e}")
         sys.exit(1)
 
 
