@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tests](https://img.shields.io/badge/tests-42%2F42-passing-brightgreen.svg)](https://github.com/your-repo/genome-mcp)
 
-## 🚀 核心特性
+## 1. 🚀 核心特性
 
 - **🧬 基因信息查询**: 基于NCBI Gene数据库的准确基因信息
 - **🔄 同源基因分析**: 基于Ensembl API的跨物种同源基因查询（253+ TP53同源基因）
@@ -18,23 +18,27 @@
 - **⚡ 异步架构**: 高性能异步处理架构
 - **🔬 科学可靠**: 基于权威数据库，无模拟数据，完全科学可信
 
-## 安装
+## 2. 安装
+
+推荐使用现代化的 [uv](https://github.com/astral-sh/uv) 包管理器以获得更快的安装速度：
+
+```bash
+# 使用uvx直接运行（推荐）
+uvx genome-mcp
+
+# 或添加到项目
+uv add genome-mcp
+```
+
+传统方式安装：
 
 ```bash
 pip install genome-mcp
 ```
 
-推荐使用现代化的 [uv](https://github.com/astral-sh/uv) 包管理器以获得更快的安装速度：
+## 3. 🛠️ MCP 接入配置
 
-```bash
-uv add genome-mcp
-# 或直接运行
-uvx genome-mcp
-```
-
-## 🛠️ MCP 接入配置
-
-### Claude Desktop
+### 3.1 Claude Desktop
 
 编辑配置文件：
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
@@ -82,7 +86,7 @@ uvx genome-mcp
 }
 ```
 
-### Continue.dev
+### 3.2 Continue.dev
 
 在 VS Code 的 Continue.dev 扩展配置中:
 
@@ -97,7 +101,7 @@ uvx genome-mcp
 }
 ```
 
-### Cursor (VS Code 扩展)
+### 3.3 Cursor (VS Code 扩展)
 
 在 Cursor 设置中添加:
 
@@ -115,7 +119,7 @@ uvx genome-mcp
 }
 ```
 
-### Cline (Claude for VS Code)
+### 3.4 Cline (Claude for VS Code)
 
 在 Cline 设置文件中:
 
@@ -131,13 +135,13 @@ uvx genome-mcp
 }
 ```
 
-### 其他支持 MCP 的客户端
+### 3.5 其他支持 MCP 的客户端
 
 1. **Windsurf**: 使用与 Claude Desktop 相同的配置格式
 2. **OpenHands**: 在 config.json 中添加服务器配置
 3. **Custom MCP Client**: 参考下面的 Python 示例
 
-### 自定义 MCP 客户端
+### 3.6 自定义 MCP 客户端
 
 使用 stdio 传输:
 
@@ -170,9 +174,9 @@ response = process.stdout.readline()
 print("Server response:", response)
 ```
 
-## 🔧 API 功能
+## 4. 🔧 API 功能
 
-### 可用工具
+### 4.1 可用工具
 
 1. **get_data** - 智能数据获取
    - 支持基因符号、ID、区域搜索、同源基因查询
@@ -195,7 +199,7 @@ print("Server response:", response)
    - FDR多重检验校正
    - 支持人类、小鼠、大鼠等多种模式生物
 
-### 使用示例
+### 4.2 使用示例
 
 ```python
 import asyncio
@@ -239,10 +243,11 @@ async def main():
 asyncio.run(main())
 ```
 
-## 📋 JSON 响应格式
+## 5. 📋 响应格式
 
-### get_data 响应示例
+所有API响应都遵循统一的JSON格式，包含 `success`、`data` 和 `query_info` 字段。
 
+示例响应：
 ```json
 {
   "success": true,
@@ -250,175 +255,44 @@ asyncio.run(main())
     "gene_info": {
       "uid": "7157",
       "name": "TP53",
-      "description": "tumor protein p53",
-      "status": "Gene",
-      "chromosome": "17",
-      "maplocation": "17p13.1",
-      "genomicinfo": [
-        {
-          "chraccver": "GRCh38.p13",
-          "chrstart": 7565097,
-          "chrstop": 7590856
-        }
-      ]
+      "description": "tumor protein p53"
     }
   },
   "query_info": {
     "query": "TP53",
-    "query_type": "gene",
-    "database": "gene"
+    "query_type": "gene"
   }
 }
 ```
 
-### smart_search 响应示例
-
-```json
-{
-  "success": true,
-  "data": {
-    "results": [
-      {
-        "uid": "7157",
-        "name": "TP53",
-        "description": "tumor protein p53"
-      }
-    ],
-    "total_count": 1,
-    "query_understanding": {
-      "intent": "gene_search",
-      "key_terms": ["tumor", "suppressor", "genes", "cancer"]
-    }
-  }
-}
-```
-
-### kegg_pathway_enrichment_tool 响应示例
-
-```json
-{
-  "query_genes": ["7157", "672", "675"],
-  "organism": "hsa",
-  "total_pathways_found": 51,
-  "significant_pathways": 15,
-  "all_pathways": [
-    {
-      "pathway_id": "hsa01522",
-      "pathway_name": "Path: hsa01522",
-      "genes": ["7157"],
-      "gene_count": 1,
-      "pvalue": 0.0001,
-      "fdr": 0.0051,
-      "fold_enrichment": 6666.67
-    }
-  ],
-  "query_info": {
-    "analysis_date": "2025-10-24",
-    "method": "KEGG Pathway Enrichment",
-    "statistical_test": "Hypergeometric Test",
-    "fdr_correction": "Benjamini-Hochberg"
-  }
-}
-```
-
-## 💻 命令行使用
+## 6. 💻 命令行使用
 
 ```bash
-# 启动 MCP 服务器 (stdio 模式)
-python -m genome_mcp
+# 直接运行（推荐）
+uvx genome-mcp
 
-# 或使用 uv
+# 开发模式运行
 uv run -m genome_mcp
 
 # HTTP 服务器模式
-python -m genome_mcp --port 8080
-
-# SSE 服务器模式
-python -m genome_mcp --mode sse --port 8080
+uv run -m genome_mcp --port 8080
 
 # 查看帮助
-python -m genome_mcp --help
-
-# 测试示例
-python examples/mcp-client-example.py
+uv run -m genome_mcp --help
 ```
 
-传输模式：
-- **stdio**: 标准输入输出，用于MCP客户端集成
-- **http**: HTTP API服务器，用于Web集成
-- **sse**: Server-Sent Events，用于实时数据流
 
-## 🔍 MCP 协议调试
-
-### 初始化请求
-
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "initialize",
-  "params": {
-    "protocolVersion": "2024-11-05",
-    "capabilities": {
-      "roots": {"listChanged": true}
-    },
-    "clientInfo": {"name": "debug-client", "version": "1.0.0"}
-  }
-}
-```
-
-### 服务器响应
-
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "result": {
-    "protocolVersion": "2024-11-05",
-    "capabilities": {
-      "tools": {"listChanged": false}
-    },
-    "serverInfo": {
-      "name": "Genome MCP",
-      "version": "0.2.0"
-    }
-  }
-}
-```
-
-### 工具调用示例
-
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 3,
-  "method": "tools/call",
-  "params": {
-    "name": "get_data",
-    "arguments": {
-      "query": "TP53",
-      "query_type": "auto"
-    }
-  }
-}
-```
-
-## 📁 配置文件
-
-项目根目录包含MCP配置示例：
-- `mcp-config.json` - 通用MCP客户端配置
-
-## 📋 更新日志
+## 7. 📋 更新日志
 
 详细的版本更新记录请查看 [CHANGELOG.md](CHANGELOG.md)
 
-## 📚 依赖
+## 8. 📚 依赖
 
 详细的依赖信息和版本要求请查看 [pyproject.toml](pyproject.toml)
 
 **Python 版本要求**：>= 3.11
 
-## 🏗️ 开发
+## 9. 🏗️ 开发
 
 ```bash
 git clone https://github.com/gqy20/genome-mcp
@@ -428,7 +302,7 @@ make test
 make lint
 ```
 
-### 开发命令
+### 9.1 开发命令
 
 ```bash
 make install    # 安装开发依赖
@@ -439,17 +313,17 @@ make check      # 完整检查
 make build      # 构建包
 ```
 
-## 📄 许可证
+## 10. 📄 许可证
 
 本项目采用 [MIT License](LICENSE) 开源许可证。
 
 © 2025 [gqy20](https://github.com/gqy20)
 
-## 🤝 贡献
+## 11. 🤝 贡献
 
 欢迎提交 Issue 和 Pull Request！
 
-## 📞 支持
+## 12. 📞 支持
 
 - 📖 [文档](https://github.com/gqy20/genome-mcp#readme)
 - 🐛 [问题反馈](https://github.com/gqy20/genome-mcp/issues)
