@@ -20,29 +20,17 @@
 
 ## 安装
 
-### 🚀 推荐方式：使用 uv
-
-本项目强烈推荐使用 **uv** - 现代化的Python包管理器，提供极快的安装速度和更好的依赖管理。
-
-```bash
-# 使用uv安装（推荐）
-uv add genome-mcp
-
-# 或使用uvx直接运行
-uvx genome-mcp
-```
-
-### 传统方式：使用 pip
-
 ```bash
 pip install genome-mcp
 ```
 
-> **💡 为什么推荐uv？**
-> - 🚀 **10倍安装速度**：比pip快10倍的依赖解析和安装
-> - 🔒 **依赖一致性**：可靠的依赖锁定，避免版本冲突
-> - ⚡ **零配置缓存**：智能缓存系统，重复安装近乎瞬时
-> - 🌐 **现代化工具链**：专为现代Python开发设计的完整工具生态系统
+推荐使用现代化的 [uv](https://github.com/astral-sh/uv) 包管理器以获得更快的安装速度：
+
+```bash
+uv add genome-mcp
+# 或直接运行
+uvx genome-mcp
+```
 
 ## 🛠️ MCP 接入配置
 
@@ -417,58 +405,18 @@ python examples/mcp-client-example.py
 
 ## 📁 配置文件
 
-项目中包含以下配置文件模板：
+项目根目录包含MCP配置示例：
+- `mcp-config.json` - 通用MCP客户端配置
 
-- `examples/claude-desktop-config.json` - Claude Desktop 配置
-- `mcp-config.json` - 通用 MCP 配置
-- `examples/mcp-client-example.py` - 完整的 Python MCP 客户端示例
-- `examples/usage_examples.py` - API 使用示例
-- `examples/fastmcp_example.py` - FastMCP 框架示例
+## 📋 更新日志
 
-## 🔧 故障排除
-
-### 常见问题
-
-1. **导入错误**: 确保已安装依赖
-   ```bash
-   pip install aiohttp fastmcp
-   ```
-
-2. **网络错误**: 检查到 NCBI 的网络连接
-   ```bash
-   curl -I "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
-   ```
-
-3. **MCP 协议错误**: 确保使用正确的 JSON-RPC 2.0 格式
-   - 消息必须以换行符结尾
-   - 必须包含 `jsonrpc: "2.0"` 字段
-
-4. **权限错误**: 确保有权限执行 Python 脚本
-
-### 调试模式
-
-启用详细日志:
-```bash
-GENOME_MCP_LOG_LEVEL=debug python -m genome_mcp
-```
-
-测试API功能:
-```bash
-python examples/mcp-client-example.py
-```
-
-### 性能优化
-
-- 使用批量查询减少API调用
-- 启用缓存机制
-- 调整超时设置
-- 使用适当的传输模式
+详细的版本更新记录请查看 [CHANGELOG.md](CHANGELOG.md)
 
 ## 📚 依赖
 
-- `aiohttp>=3.8.0` - HTTP 客户端
-- `fastmcp>=2.0.0` - MCP 协议支持
-- Python >= 3.10
+详细的依赖信息和版本要求请查看 [pyproject.toml](pyproject.toml)
+
+**Python 版本要求**：>= 3.11
 
 ## 🏗️ 开发
 
@@ -493,7 +441,9 @@ make build      # 构建包
 
 ## 📄 许可证
 
-MIT License - 详见 [LICENSE](LICENSE) 文件
+本项目采用 [MIT License](LICENSE) 开源许可证。
+
+© 2025 [gqy20](https://github.com/gqy20)
 
 ## 🤝 贡献
 
