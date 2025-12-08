@@ -2,7 +2,6 @@
 传输模式集成测试
 """
 
-import importlib.util
 import json
 import os
 import sys
@@ -103,10 +102,9 @@ class TestMCPConfiguration:
             os.path.dirname(__file__),
             "..",
             "..",
-            "examples",
-            "claude-desktop-config.json",
+            "mcp-config.json",
         )
-        assert os.path.exists(config_path), "Claude Desktop配置示例不存在"
+        assert os.path.exists(config_path), "MCP配置示例不存在"
 
         with open(config_path) as f:
             try:
@@ -114,58 +112,11 @@ class TestMCPConfiguration:
                 assert isinstance(config, dict)
                 assert "mcpServers" in config
             except json.JSONDecodeError as e:
-                pytest.fail(f"Claude Desktop配置示例JSON格式错误: {e}")
+                pytest.fail(f"MCP配置示例JSON格式错误: {e}")
 
 
-class TestExamples:
-    """示例文件测试"""
-
-    def test_fastmcp_example(self):
-        """测试FastMCP示例"""
-        example_path = os.path.join(
-            os.path.dirname(__file__), "..", "..", "examples", "fastmcp_example.py"
-        )
-        assert os.path.exists(example_path), "FastMCP示例文件不存在"
-
-        # 检查示例文件是否可以导入
-        try:
-            spec = importlib.util.spec_from_file_location(
-                "fastmcp_example", example_path
-            )
-            module = importlib.util.module_from_spec(spec)
-            # 不执行示例，只检查语法
-            with open(example_path) as f:
-                compile(f.read(), example_path, "exec")
-        except Exception as e:
-            pytest.fail(f"FastMCP示例文件语法错误: {e}")
-
-    def test_usage_examples(self):
-        """测试使用示例"""
-        example_path = os.path.join(
-            os.path.dirname(__file__), "..", "..", "examples", "usage_examples.py"
-        )
-        assert os.path.exists(example_path), "使用示例文件不存在"
-
-        # 检查示例文件语法
-        try:
-            with open(example_path) as f:
-                compile(f.read(), example_path, "exec")
-        except Exception as e:
-            pytest.fail(f"使用示例文件语法错误: {e}")
-
-    def test_mcp_client_example(self):
-        """测试MCP客户端示例"""
-        example_path = os.path.join(
-            os.path.dirname(__file__), "..", "..", "examples", "mcp-client-example.py"
-        )
-        assert os.path.exists(example_path), "MCP客户端示例文件不存在"
-
-        # 检查示例文件语法
-        try:
-            with open(example_path) as f:
-                compile(f.read(), example_path, "exec")
-        except Exception as e:
-            pytest.fail(f"MCP客户端示例文件语法错误: {e}")
+# 示例文件测试已移除，因为examples目录已被删除
+# 相关示例已整合到README.md文档中
 
 
 if __name__ == "__main__":
