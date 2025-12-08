@@ -9,7 +9,6 @@ import ast
 import re
 import sys
 from pathlib import Path
-from typing import List, Dict, Set, Optional
 
 # 处理Python版本兼容性问题
 try:
@@ -78,11 +77,11 @@ class FastMCPComplianceChecker:
             self.issues.append("❌ 缺少tools.py文件")
             return
 
-        with open(tools_file, 'r', encoding='utf-8') as f:
+        with open(tools_file, encoding="utf-8") as f:
             content = f.read()
 
         # 提取工具函数 - 使用经过验证的简单模式
-        tool_pattern = r'@mcp\.tool\(\)\s*\n\s*async def (\w+)'
+        tool_pattern = r"@mcp\.tool\(\)\s*\n\s*async def (\w+)"
         tool_names = re.findall(tool_pattern, content)
 
         if not tool_names:
@@ -92,7 +91,7 @@ class FastMCPComplianceChecker:
         # 为每个工具函数提取详细信息
         for func_name in tool_names:
             # 通过函数名查找完整的函数定义来获取参数和返回类型
-            func_pattern = rf'async def {func_name}\s*\((.*?)\)(?:\s*->\s*([^\n:]+))?:'
+            func_pattern = rf"async def {func_name}\s*\((.*?)\)(?:\s*->\s*([^\n:]+))?:"
             func_match = re.search(func_pattern, content, re.DOTALL)
 
             params = ""
@@ -108,11 +107,11 @@ class FastMCPComplianceChecker:
             docstring = docstring_match.group(1).strip() if docstring_match else ""
 
             self.tool_details[func_name] = {
-                'name': func_name,
-                'parameters': params,
-                'return_type': return_type or 'dict[str, Any]',  # 默认返回类型
-                'docstring': docstring,
-                'full_match': True
+                "name": func_name,
+                "parameters": params,
+                "return_type": return_type or "dict[str, Any]",  # 默认返回类型
+                "docstring": docstring,
+                "full_match": True,
             }
 
         print(f"✅ 提取到 {len(self.tool_details)} 个MCP工具函数")
@@ -122,8 +121,12 @@ class FastMCPComplianceChecker:
         print("🔤 检查工具函数规范...")
 
         required_tools = {
-            'get_data', 'smart_search', 'advanced_query',
-            'analyze_gene_evolution', 'build_phylogenetic_profile', 'kegg_pathway_enrichment'
+            "get_data",
+            "smart_search",
+            "advanced_query",
+            "analyze_gene_evolution",
+            "build_phylogenetic_profile",
+            "kegg_pathway_enrichment",
         }
 
         found_tools = set(self.tool_details.keys())
@@ -134,10 +137,12 @@ class FastMCPComplianceChecker:
 
         # 检查工具命名
         for tool_name in self.tool_details:
-            if tool_name.endswith('_tool'):
+            if tool_name.endswith("_tool"):
                 self.issues.append(f"❌ 工具函数名包含冗余后缀: {tool_name}")
 
-        print(f"✅ 工具函数检查完成 ({len(found_tools)}/{len(required_tools)} 个核心工具)")
+        print(
+            f"✅ 工具函数检查完成 ({len(found_tools)}/{len(required_tools)} 个核心工具)"
+        )
 
     def check_tool_signatures(self):
         """检查工具函数签名的详细规范"""
@@ -145,36 +150,40 @@ class FastMCPComplianceChecker:
 
         for tool_name, details in self.tool_details.items():
             # 检查返回类型 - 更加宽松的标准
-            return_type = details['return_type']
+            return_type = details["return_type"]
             # 只对真正模糊的类型报错，允许合理的TypedDict类型
-            vague_types = ['dict', 'Dict', 'Any', 'dict[str, Any]', 'Dict[str, Any]']
+            vague_types = ["dict", "Dict", "Any", "dict[str, Any]", "Dict[str, Any]"]
             if return_type in vague_types:
-                self.issues.append(f"❌ {tool_name}: 使用过于宽泛的返回类型 {return_type}")
-            elif not any(t in return_type for t in ['Result', 'Dict', 'TypedDict']):
+                self.issues.append(
+                    f"❌ {tool_name}: 使用过于宽泛的返回类型 {return_type}"
+                )
+            elif not any(t in return_type for t in ["Result", "Dict", "TypedDict"]):
                 # 如果不是明显的结果类型，给出警告但不阻止
                 pass
 
             # 检查参数
-            params_str = details['parameters']
+            params_str = details["parameters"]
             if not params_str.strip():
                 self.issues.append(f"❌ {tool_name}: 函数没有参数")
                 continue
 
             # 解析参数
-            param_pattern = r'(\w+):\s*([^,=\n]+)(?:\s*=\s*([^,\n]+))?'
+            param_pattern = r"(\w+):\s*([^,=\n]+)(?:\s*=\s*([^,\n]+))?"
             param_matches = re.findall(param_pattern, params_str)
 
             if not param_matches:
                 self.issues.append(f"❌ {tool_name}: 无法解析参数")
                 continue
 
-            for param_name, param_type, default_value in param_matches:
+            for param_name, param_type, _default_value in param_matches:
                 # 检查参数类型注解
                 if not param_type.strip():
-                    self.issues.append(f"❌ {tool_name}: 参数 {param_name} 缺少类型注解")
+                    self.issues.append(
+                        f"❌ {tool_name}: 参数 {param_name} 缺少类型注解"
+                    )
 
                 # 检查常见参数
-                if param_name == 'max_results' and 'int' not in param_type:
+                if param_name == "max_results" and "int" not in param_type:
                     self.issues.append(f"❌ {tool_name}: max_results参数应该是int类型")
 
         print("✅ 工具函数签名检查完成")
@@ -184,7 +193,7 @@ class FastMCPComplianceChecker:
         print("📖 检查工具函数文档...")
 
         for tool_name, details in self.tool_details.items():
-            docstring = details['docstring']
+            docstring = details["docstring"]
 
             # 检查文档字符串长度 - 降低要求
             if len(docstring) < 20:
@@ -192,9 +201,13 @@ class FastMCPComplianceChecker:
                 continue
 
             # 检查是否有基本的文档内容
-            has_args = 'Args:' in docstring or '参数:' in docstring
-            has_returns = 'Returns:' in docstring or '返回:' in docstring
-            has_examples = 'Examples:' in docstring or '示例:' in docstring or 'Example:' in docstring
+            has_args = "Args:" in docstring or "参数:" in docstring
+            has_returns = "Returns:" in docstring or "返回:" in docstring
+            has_examples = (
+                "Examples:" in docstring
+                or "示例:" in docstring
+                or "Example:" in docstring
+            )
 
             # 更宽松的文档检查
             if not (has_args or has_returns or has_examples):
@@ -209,22 +222,30 @@ class FastMCPComplianceChecker:
         print("✅ 检查工具函数参数规范...")
 
         for tool_name, details in self.tool_details.items():
-            params_str = details['parameters']
+            params_str = details["parameters"]
 
             # 解析参数
-            param_pattern = r'(\w+):\s*([^,=\n]+)(?:\s*=\s*([^,\n]+))?'
+            param_pattern = r"(\w+):\s*([^,=\n]+)(?:\s*=\s*([^,\n]+))?"
             param_matches = re.findall(param_pattern, params_str)
 
-            for param_name, param_type, default_value in param_matches:
+            for param_name, param_type, _default_value in param_matches:
                 # 检查max_results参数
-                if param_name == 'max_results':
-                    if default_value and int(default_value.strip()) > 100:
-                        self.issues.append(f"❌ {tool_name}: max_results默认值过大 ({default_value})")
+                if param_name == "max_results":
+                    if _default_value and int(_default_value.strip()) > 100:
+                        self.issues.append(
+                            f"❌ {tool_name}: max_results默认值过大 ({_default_value})"
+                        )
 
                 # 检查query参数
-                if param_name == 'query':
-                    if 'Union' not in param_type and 'List' not in param_type and 'str' not in param_type:
-                        self.issues.append(f"❌ {tool_name}: query参数类型应该支持str或List[str]")
+                if param_name == "query":
+                    if (
+                        "Union" not in param_type
+                        and "List" not in param_type
+                        and "str" not in param_type
+                    ):
+                        self.issues.append(
+                            f"❌ {tool_name}: query参数类型应该支持str或List[str]"
+                        )
 
                 # 不再强制要求Optional类型注解，因为Python中这是可选的
                 # Optional类型注解是最佳实践但不是必需的
@@ -241,18 +262,18 @@ class FastMCPComplianceChecker:
             self.issues.append("❌ 缺少types.py文件")
             return
 
-        with open(types_file, 'r', encoding='utf-8') as f:
+        with open(types_file, encoding="utf-8") as f:
             types_content = f.read()
 
         required_types = [
-            'GeneInfo(TypedDict)',
-            'ProteinInfo(TypedDict)',
-            'SearchResult(TypedDict)',
-            'BatchResult(TypedDict)',
-            'AdvancedQueryResult(TypedDict)',
-            'KEGGResult(TypedDict)',
-            'ErrorResult(TypedDict)',
-            'ToolResult'
+            "GeneInfo(TypedDict)",
+            "ProteinInfo(TypedDict)",
+            "SearchResult(TypedDict)",
+            "BatchResult(TypedDict)",
+            "AdvancedQueryResult(TypedDict)",
+            "KEGGResult(TypedDict)",
+            "ErrorResult(TypedDict)",
+            "ToolResult",
         ]
 
         for type_def in required_types:
@@ -261,17 +282,19 @@ class FastMCPComplianceChecker:
 
         # 检查每个工具的返回类型是否合适
         for tool_name, details in self.tool_details.items():
-            return_type = details['return_type']
+            return_type = details["return_type"]
 
-            if tool_name == 'get_data':
-                if return_type not in ['ToolResult', 'Dict[str, Any]']:
+            if tool_name == "get_data":
+                if return_type not in ["ToolResult", "Dict[str, Any]"]:
                     self.issues.append(f"❌ {tool_name}: 返回类型应该为ToolResult")
-            elif tool_name == 'smart_search':
-                if return_type != 'SearchResult':
+            elif tool_name == "smart_search":
+                if return_type != "SearchResult":
                     self.issues.append(f"❌ {tool_name}: 返回类型应该为SearchResult")
-            elif tool_name == 'advanced_query':
-                if return_type != 'AdvancedQueryResult':
-                    self.issues.append(f"❌ {tool_name}: 返回类型应该为AdvancedQueryResult")
+            elif tool_name == "advanced_query":
+                if return_type != "AdvancedQueryResult":
+                    self.issues.append(
+                        f"❌ {tool_name}: 返回类型应该为AdvancedQueryResult"
+                    )
 
         print("✅ 工具函数返回类型检查完成")
 
@@ -280,28 +303,28 @@ class FastMCPComplianceChecker:
         print("⚠️ 检查工具函数错误处理...")
 
         tools_file = self.src_path / "core" / "tools.py"
-        with open(tools_file, 'r', encoding='utf-8') as f:
+        with open(tools_file, encoding="utf-8") as f:
             content = f.read()
 
         for tool_name in self.tool_details:
             # 查找工具函数的try-except块
-            func_pattern = rf'async def {tool_name}\s*\([^)]*\)[^:]*:\s*(.*?)(?=\n    @|\n    def|\Z)'
+            func_pattern = rf"async def {tool_name}\s*\([^)]*\)[^:]*:\s*(.*?)(?=\n    @|\n    def|\Z)"
             func_match = re.search(func_pattern, content, re.DOTALL)
 
             if func_match:
                 func_body = func_match.group(1)
 
                 # 检查是否有try-except
-                if 'try:' not in func_body:
+                if "try:" not in func_body:
                     self.issues.append(f"❌ {tool_name}: 缺少异常处理")
                     continue
 
                 # 检查是否处理ValidationError
-                if 'ValidationError' not in func_body:
+                if "ValidationError" not in func_body:
                     self.issues.append(f"❌ {tool_name}: 未处理ValidationError异常")
 
                 # 检查是否使用了统一的错误格式化
-                if 'format_simple_error' not in func_body:
+                if "format_simple_error" not in func_body:
                     self.issues.append(f"❌ {tool_name}: 未使用统一错误格式化函数")
 
         print("✅ 工具函数错误处理检查完成")
@@ -315,15 +338,15 @@ class FastMCPComplianceChecker:
             self.issues.append("❌ 缺少errors.py模块")
             return
 
-        with open(errors_file, 'r', encoding='utf-8') as f:
+        with open(errors_file, encoding="utf-8") as f:
             content = f.read()
 
         required_classes = [
-            'class GenomeMCPError',
-            'class ValidationError',
-            'class APIError',
-            'class DataNotFoundError',
-            'class ErrorCodes'
+            "class GenomeMCPError",
+            "class ValidationError",
+            "class APIError",
+            "class DataNotFoundError",
+            "class ErrorCodes",
         ]
 
         for class_def in required_classes:
@@ -331,7 +354,7 @@ class FastMCPComplianceChecker:
                 self.issues.append(f"❌ 缺少错误类: {class_def}")
 
         # 检查format_simple_error函数
-        if 'def format_simple_error' not in content:
+        if "def format_simple_error" not in content:
             self.issues.append("❌ 缺少format_simple_error函数")
 
         print("✅ 错误处理模块检查完成")
@@ -345,14 +368,14 @@ class FastMCPComplianceChecker:
             self.issues.append("❌ 缺少validation.py模块")
             return
 
-        with open(validation_file, 'r', encoding='utf-8') as f:
+        with open(validation_file, encoding="utf-8") as f:
             content = f.read()
 
         required_functions = [
-            'def validate_common_params',
-            'def validate_gene_params',
-            'def validate_kegg_params',
-            'def validate_search_params'
+            "def validate_common_params",
+            "def validate_gene_params",
+            "def validate_kegg_params",
+            "def validate_search_params",
         ]
 
         for func_def in required_functions:
@@ -361,9 +384,9 @@ class FastMCPComplianceChecker:
 
         # 检查参数范围验证
         validation_checks = [
-            'max_results > 100',
-            'min_results < 1',
-            'if max_results < 1'
+            "max_results > 100",
+            "min_results < 1",
+            "if max_results < 1",
         ]
 
         found_checks = 0
@@ -385,25 +408,31 @@ class FastMCPComplianceChecker:
             self.issues.append("❌ 缺少types.py模块")
             return
 
-        with open(types_file, 'r', encoding='utf-8') as f:
+        with open(types_file, encoding="utf-8") as f:
             content = f.read()
 
         # 检查TypedDict导入（兼容Python 3.11和3.12+）
-        if not any(pattern in content for pattern in ['from typing import TypedDict', 'from typing_extensions import TypedDict']):
+        if not any(
+            pattern in content
+            for pattern in [
+                "from typing import TypedDict",
+                "from typing_extensions import TypedDict",
+            ]
+        ):
             self.issues.append("❌ types.py未导入TypedDict")
 
         # 检查关键类型定义
         critical_types = [
-            'GeneInfo',
-            'ProteinInfo',
-            'SearchResult',
-            'BatchResult',
-            'ErrorResult',
-            'ToolResult'
+            "GeneInfo",
+            "ProteinInfo",
+            "SearchResult",
+            "BatchResult",
+            "ErrorResult",
+            "ToolResult",
         ]
 
         for type_name in critical_types:
-            if f'class {type_name}(TypedDict)' not in content:
+            if f"class {type_name}(TypedDict)" not in content:
                 self.issues.append(f"❌ 缺少TypedDict定义: {type_name}")
 
         print("✅ 类型定义模块检查完成")
@@ -413,7 +442,7 @@ class FastMCPComplianceChecker:
         print("📚 检查资源定义...")
 
         tools_file = self.src_path / "core" / "tools.py"
-        with open(tools_file, 'r', encoding='utf-8') as f:
+        with open(tools_file, encoding="utf-8") as f:
             content = f.read()
 
         # 检查是否有@mcp.resource装饰器
@@ -432,15 +461,15 @@ class FastMCPComplianceChecker:
                 self.issues.append(f"❌ 资源路径格式不正确: {resource_path}")
 
         # 检查create_mcp_resources函数
-        if 'def create_mcp_resources(mcp:' not in content:
+        if "def create_mcp_resources(mcp:" not in content:
             self.issues.append("❌ 缺少create_mcp_resources函数")
 
         # 检查main.py中的资源注册
         main_file = self.src_path / "main.py"
         if main_file.exists():
-            with open(main_file, 'r', encoding='utf-8') as f:
+            with open(main_file, encoding="utf-8") as f:
                 main_content = f.read()
-            if 'create_mcp_resources(mcp)' not in main_content:
+            if "create_mcp_resources(mcp)" not in main_content:
                 self.issues.append("❌ main.py未注册MCP资源")
 
         print(f"✅ 资源定义检查完成 ({len(resource_matches)}个资源)")
@@ -450,7 +479,7 @@ class FastMCPComplianceChecker:
         print("🔗 检查导入冲突...")
 
         tools_file = self.src_path / "core" / "tools.py"
-        with open(tools_file, 'r', encoding='utf-8') as f:
+        with open(tools_file, encoding="utf-8") as f:
             content = f.read()
 
         # 解析AST查找函数定义
@@ -467,11 +496,11 @@ class FastMCPComplianceChecker:
                 function_names.add(node.name)
 
         # 检查导入的函数与本地函数重名
-        import_lines = re.findall(r'from [^ ]+ import (.+)', content)
+        import_lines = re.findall(r"from [^ ]+ import (.+)", content)
         for import_line in import_lines:
-            imported_names = [name.strip() for name in import_line.split(',')]
+            imported_names = [name.strip() for name in import_line.split(",")]
             for name in imported_names:
-                if ' as ' in name:
+                if " as " in name:
                     continue
                 if name in function_names:
                     self.issues.append(f"❌ 导入冲突: {name} 与本地函数重名")
@@ -486,10 +515,10 @@ class FastMCPComplianceChecker:
             python_files = list(self.src_path.rglob("*.py"))
 
             for py_file in python_files:
-                with open(py_file, 'r', encoding='utf-8') as f:
+                with open(py_file, encoding="utf-8") as f:
                     code = f.read()
                 try:
-                    compile(code, str(py_file), 'exec')
+                    compile(code, str(py_file), "exec")
                 except SyntaxError as e:
                     self.issues.append(f"❌ 语法错误: {py_file} - {e}")
                     return False
@@ -507,13 +536,10 @@ class FastMCPComplianceChecker:
 
         try:
             import sys
+
             sys.path.insert(0, str(self.src_path.parent))
 
-            from genome_mcp.main import mcp
-            from genome_mcp.core.tools import create_mcp_tools
             from genome_mcp.core.validation import validate_common_params
-            from genome_mcp.core.errors import ValidationError
-            from genome_mcp.core.types import ToolResult
 
             # 测试基本功能
             max_results, species, query_type = validate_common_params(max_results=50)
@@ -570,7 +596,7 @@ class FastMCPComplianceChecker:
             for i, issue in enumerate(self.issues, 1):
                 print(f"  {i}. {issue}")
 
-            print(f"\n💡 请修复上述问题后重新检查")
+            print("\n💡 请修复上述问题后重新检查")
             return False
 
 

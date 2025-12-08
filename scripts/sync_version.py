@@ -8,24 +8,26 @@
 
 import re
 import sys
-from pathlib import Path
 import tomllib
+from pathlib import Path
+
 
 def read_version_from_pyproject():
     """从pyproject.toml读取版本号"""
     try:
-        pyproject_path = Path('pyproject.toml')
-        with open(pyproject_path, 'rb') as f:
+        pyproject_path = Path("pyproject.toml")
+        with open(pyproject_path, "rb") as f:
             data = tomllib.load(f)
-        return data['project']['version']
+        return data["project"]["version"]
     except Exception as e:
         print(f"❌ 读取pyproject.toml失败: {e}")
         sys.exit(1)
 
+
 def update_init_py(version):
     """更新__init__.py中的版本"""
     try:
-        init_py_path = Path('src/genome_mcp/__init__.py')
+        init_py_path = Path("src/genome_mcp/__init__.py")
         content = init_py_path.read_text()
         content = re.sub(r'__version__ = ".*"', f'__version__ = "{version}"', content)
         init_py_path.write_text(content)
@@ -35,16 +37,19 @@ def update_init_py(version):
         return False
     return True
 
+
 def update_main_py(version):
     """更新main.py中的版本"""
     try:
-        main_py_path = Path('src/genome_mcp/main.py')
+        main_py_path = Path("src/genome_mcp/main.py")
         content = main_py_path.read_text()
 
         # 更新FastMCP版本
         content = re.sub(r'version=".*"', f'version="{version}"', content)
         # 更新CLI版本信息
-        content = re.sub(r'version="Genome MCP v.*"', f'version="Genome MCP v{version}"', content)
+        content = re.sub(
+            r'version="Genome MCP v.*"', f'version="Genome MCP v{version}"', content
+        )
 
         main_py_path.write_text(content)
         print(f"✅ 更新 main.py: {version}")
@@ -52,6 +57,7 @@ def update_main_py(version):
         print(f"❌ 更新main.py失败: {e}")
         return False
     return True
+
 
 def main():
     """主函数"""
@@ -71,6 +77,7 @@ def main():
     else:
         print("❌ 版本同步失败!")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

@@ -4,7 +4,6 @@ KEGG通路富集分析 - MVP版本
 提供KEGG通路的富集分析功能
 """
 
-import asyncio
 from typing import Any
 
 import aiohttp
@@ -362,7 +361,7 @@ class KEGGEnrichment:
                 # 优先返回精确匹配
                 return exact_match or best_match
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             print(f"KEGG API超时: {gene_symbol}")
         except Exception as e:
             print(f"解析基因符号 {gene_symbol} 失败: {e}")

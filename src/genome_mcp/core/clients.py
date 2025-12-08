@@ -6,7 +6,6 @@ NCBI, UniProt, KEGG API客户端
 OrthoDB客户端已删除，将被Ensembl客户端替代
 """
 
-import asyncio
 from typing import Any
 
 import aiohttp
@@ -376,7 +375,7 @@ class KEGGClient:
                     "pathway_count": len(pathways),
                     "pathways": pathways,
                 }
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return {
                 "error": "KEGG API 请求超时",
                 "suggestions": ["稍后重试", "检查网络连接速度", "减少查询数据量"],
@@ -430,7 +429,7 @@ class KEGGClient:
                     "gene_count": len(gene_pathways),
                     "gene_pathways": gene_pathways,
                 }
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return {
                 "error": "KEGG基因-通路映射请求超时",
                 "organism": organism,
