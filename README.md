@@ -326,6 +326,7 @@ make build      # 构建包
 ## 12. 📞 支持
 
 - 📖 [文档](https://github.com/gqy20/genome-mcp#readme)
+- 🧬 [Glama MCP服务器](https://glama.ai/mcp/servers/@gqy20/genome-mcp)
 - 🐛 [问题反馈](https://github.com/gqy20/genome-mcp/issues)
 - 💬 [讨论](https://github.com/gqy20/genome-mcp/discussions)
 
