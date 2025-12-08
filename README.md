@@ -1,11 +1,12 @@
 # Genome MCP
 
-🧬 智能基因组数据服务器 - 通过MCP协议提供高质量的基因信息查询、同源基因分析和进化研究功能。
+🧬 智能基因组数据服务器 - 通过MCP协议提供高质量的基因信息查询、同源基因分析和进化研究功能。可在 [Glama MCP平台](https://glama.ai/mcp/servers/@gqy20/genome-mcp) 发现和快速配置。
 
 [![PyPI version](https://img.shields.io/pypi/v/genome-mcp.svg)](https://pypi.org/project/genome-mcp/)
 [![Python versions](https://img.shields.io/pypi/pyversions/genome-mcp.svg)](https://pypi.org/project/genome-mcp/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-42%2F42-passing-brightgreen.svg)](https://github.com/your-repo/genome-mcp)
+[![Tests](https://img.shields.io/badge/tests-39%2F39-passing-brightgreen.svg)](https://github.com/gqy20/genome-mcp)
+[![Glama MCP Server](https://glama.ai/mcp/servers/@gqy20/genome-mcp)](https://glama.ai/mcp/servers/@gqy20/genome-mcp)
 
 ## 1. 🚀 核心特性
 
